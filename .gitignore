@@ -1,2 +1,10 @@
 .worktrees/
 node_modules/
+
+# Environment files
+app/.env.local
+app/.env.production
+
+# Supabase
+supabase/.branches
+supabase/.temp
