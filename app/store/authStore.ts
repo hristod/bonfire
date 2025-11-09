@@ -10,10 +10,14 @@ interface AuthStore {
   loading: boolean;
   initialized: boolean;
   subscription: { unsubscribe: () => void } | null;
+  oauthLoading: boolean;
+  pendingNickname: boolean;
   setAuth: (user: User | null, session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
+  setOAuthLoading: (loading: boolean) => void;
+  setPendingNickname: (pending: boolean) => void;
   signOut: () => Promise<void>;
   initialize: () => Promise<void>;
   cleanup: () => void;
@@ -26,6 +30,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   loading: true,
   initialized: false,
   subscription: null,
+  oauthLoading: false,
+  pendingNickname: false,
 
   setAuth: (user, session) => set({ user, session }),
 
@@ -48,6 +54,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       throw error;
     }
   },
+
+  setOAuthLoading: (loading) => set({ oauthLoading: loading }),
+
+  setPendingNickname: (pending) => set({ pendingNickname: pending }),
 
   cleanup: () => {
     const { subscription } = get();
