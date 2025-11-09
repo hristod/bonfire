@@ -37,7 +37,10 @@ export default function ProfileScreen() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ nickname: data.nickname })
+        .update({
+          nickname: data.nickname,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', user.id);
 
       if (error) {
@@ -72,7 +75,10 @@ export default function ProfileScreen() {
         // Update profile with new avatar URL
         const { error } = await supabase
           .from('profiles')
-          .update({ avatar_url: avatarUrl })
+          .update({
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', user.id);
 
         if (error) {

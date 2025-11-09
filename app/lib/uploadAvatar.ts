@@ -16,7 +16,7 @@ export async function pickAndUploadAvatar(
 
     // Pick image
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -69,6 +69,10 @@ export async function pickAndUploadAvatar(
           const { data: { publicUrl } } = supabase.storage
             .from('avatars')
             .getPublicUrl(filename);
+
+          if (!publicUrl) {
+            throw new Error('Failed to get public URL for uploaded avatar');
+          }
 
           resolve(publicUrl);
         } catch (error) {
