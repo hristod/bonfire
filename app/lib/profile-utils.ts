@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 
 /**
  * Generate a nickname from OAuth provider user data
- * Priority: full_name from metadata -> email prefix
+ * Priority: full_name from metadata -> email prefix -> userId prefix
  * Sanitizes to lowercase, alphanumeric + underscores only
  */
 export function generateNickname(user: User): string {
@@ -12,27 +12,41 @@ export function generateNickname(user: User): string {
 
   if (fullName) {
     // Sanitize: lowercase, replace spaces with underscores, keep only alphanumeric and underscores
-    return fullName
+    const sanitized = fullName
       .toLowerCase()
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_]/g, '')
       .slice(0, 20); // Max 20 characters
+
+    if (sanitized) {
+      return sanitized;
+    }
   }
 
   // Fallback to email prefix
   const email = user.email || '';
   const emailPrefix = email.split('@')[0];
-
-  return emailPrefix
+  const sanitizedEmail = emailPrefix
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '')
     .slice(0, 20);
+
+  if (sanitizedEmail) {
+    return sanitizedEmail;
+  }
+
+  // Final fallback: use userId prefix
+  return `user_${user.id.slice(0, 8)}`;
 }
 
 /**
  * Check if a nickname is available (not already taken)
  */
 export async function isNicknameAvailable(nickname: string): Promise<boolean> {
+  if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
+    throw new Error('Nickname must be a non-empty string');
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('nickname')
@@ -56,6 +70,13 @@ export async function createProfileWithNickname(
   userId: string,
   nickname: string
 ): Promise<boolean> {
+  if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    throw new Error('User ID must be a non-empty string');
+  }
+  if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
+    throw new Error('Nickname must be a non-empty string');
+  }
+
   const { error } = await supabase
     .from('profiles')
     .insert({
@@ -82,6 +103,13 @@ export async function updateProfileNickname(
   userId: string,
   nickname: string
 ): Promise<void> {
+  if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    throw new Error('User ID must be a non-empty string');
+  }
+  if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
+    throw new Error('Nickname must be a non-empty string');
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({ nickname })
