@@ -1,9 +1,4 @@
 export * from './database.types';
+import type { Database } from './database.types';
 
-export interface Profile {
-  id: string;
-  nickname: string;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type Profile = Database['public']['Tables']['profiles']['Row'];
