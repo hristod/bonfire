@@ -1,5 +1,24 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  Input,
+  InputField,
+  useToast,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+} from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +37,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<SignInForm>();
   const { oauthLoading, setOAuthLoading, setPendingNickname, user } = useAuthStore();
+  const toast = useToast();
 
   const handleOAuthSignIn = async (provider: 'apple' | 'google') => {
     setOAuthLoading(true);
@@ -29,13 +49,29 @@ export default function SignInScreen() {
 
       if (error) {
         if (error.message !== 'User cancelled') {
-          Alert.alert('Error', 'Authentication failed. Please try again.');
+          toast.show({
+            placement: 'top',
+            render: ({ id }) => (
+              <Toast nativeID={id} action="error" variant="solid">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>Authentication failed. Please try again.</ToastDescription>
+              </Toast>
+            ),
+          });
         }
       }
       // Success handling happens in auth state listener
     } catch (error) {
       console.error('OAuth error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>An unexpected error occurred</ToastDescription>
+          </Toast>
+        ),
+      });
     } finally {
       setOAuthLoading(false);
     }
@@ -51,10 +87,26 @@ export default function SignInScreen() {
       });
 
       if (error) {
-        Alert.alert('Error', error.message);
+        toast.show({
+          placement: 'top',
+          render: ({ id }) => (
+            <Toast nativeID={id} action="error" variant="solid">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>{error.message}</ToastDescription>
+            </Toast>
+          ),
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>An unexpected error occurred</ToastDescription>
+          </Toast>
+        ),
+      });
       console.error(error);
     } finally {
       setLoading(false);
@@ -62,155 +114,111 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
-
-      <OAuthButton
-        provider="apple"
-        onPress={() => handleOAuthSignIn('apple')}
-        loading={oauthLoading}
-      />
-
-      <OAuthButton
-        provider="google"
-        onPress={() => handleOAuthSignIn('google')}
-        loading={oauthLoading}
-      />
-
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or continue with</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      <Controller
-        control={control}
-        name="email"
-        rules={{
-          required: 'Email is required',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Invalid email address',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            {errors.email && (
-              <Text style={styles.error}>{errors.email.message}</Text>
-            )}
-          </View>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="password"
-        rules={{
-          required: 'Password is required',
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              secureTextEntry
-            />
-            {errors.password && (
-              <Text style={styles.error}>{errors.password.message}</Text>
-            )}
-          </View>
-        )}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSubmit(onSignIn)}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Signing in...' : 'Sign In'}
+    <Box flex={1} bg="$white" p="$5" justifyContent="center">
+      <VStack space="$4">
+        <Text size="2xl" bold textAlign="center" mb="$2">
+          Welcome Back
         </Text>
-      </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
-        <Text style={styles.link}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
-    </View>
+        <OAuthButton
+          provider="apple"
+          onPress={() => handleOAuthSignIn('apple')}
+          loading={oauthLoading}
+        />
+
+        <OAuthButton
+          provider="google"
+          onPress={() => handleOAuthSignIn('google')}
+          loading={oauthLoading}
+        />
+
+        <HStack space="$3" alignItems="center" my="$3">
+          <Box flex={1} height={1} bg="$borderLight200" />
+          <Text size="sm" color="$textLight500">
+            or continue with
+          </Text>
+          <Box flex={1} height={1} bg="$borderLight200" />
+        </HStack>
+
+        <FormControl isInvalid={!!errors.email}>
+          <FormControlLabel>
+            <FormControlLabelText>Email</FormControlLabelText>
+          </FormControlLabel>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Email"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.email?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+
+        <FormControl isInvalid={!!errors.password}>
+          <FormControlLabel>
+            <FormControlLabelText>Password</FormControlLabelText>
+          </FormControlLabel>
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'Password is required',
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  type="password"
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.password?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+
+        <Button
+          isDisabled={loading}
+          onPress={handleSubmit(onSignIn)}
+          mt="$2"
+        >
+          {loading ? (
+            <ButtonSpinner />
+          ) : (
+            <ButtonText>Sign In</ButtonText>
+          )}
+        </Button>
+
+        <Button
+          variant="link"
+          onPress={() => router.push('/(auth)/sign-up')}
+          mt="$2"
+        >
+          <ButtonText>Don't have an account? Sign Up</ButtonText>
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
-    marginTop: 15,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    color: '#666',
-    fontSize: 14,
-  },
-});
