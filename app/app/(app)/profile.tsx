@@ -1,14 +1,28 @@
 import { useState } from 'react';
 import {
-  View,
+  Box,
+  VStack,
+  HStack,
   Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  Avatar,
+  AvatarImage,
+  AvatarFallbackText,
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  Input,
+  InputField,
+  useToast,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  Spinner,
+} from '@gluestack-ui/themed';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../../store/authStore';
 import { useProfileStore } from '../../store/profileStore';
@@ -28,6 +42,7 @@ export default function ProfileScreen() {
       nickname: profile?.nickname || '',
     },
   });
+  const toast = useToast();
 
   const onSave = async (data: ProfileForm) => {
     if (!user) return;
@@ -44,7 +59,15 @@ export default function ProfileScreen() {
         .eq('id', user.id);
 
       if (error) {
-        Alert.alert('Error', error.message);
+        toast.show({
+          placement: 'top',
+          render: ({ id }) => (
+            <Toast nativeID={id} action="error" variant="solid">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>{error.message}</ToastDescription>
+            </Toast>
+          ),
+        });
         return;
       }
 
@@ -53,9 +76,25 @@ export default function ProfileScreen() {
         setProfile({ ...profile, nickname: data.nickname });
       }
 
-      Alert.alert('Success', 'Profile updated successfully');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="success" variant="solid">
+            <ToastTitle>Success</ToastTitle>
+            <ToastDescription>Profile updated successfully</ToastDescription>
+          </Toast>
+        ),
+      });
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>An unexpected error occurred</ToastDescription>
+          </Toast>
+        ),
+      });
       console.error(error);
     } finally {
       setSaving(false);
@@ -90,10 +129,26 @@ export default function ProfileScreen() {
           setProfile({ ...profile, avatar_url: avatarUrl });
         }
 
-        Alert.alert('Success', 'Avatar updated successfully');
+        toast.show({
+          placement: 'top',
+          render: ({ id }) => (
+            <Toast nativeID={id} action="success" variant="solid">
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Avatar updated successfully</ToastDescription>
+            </Toast>
+          ),
+        });
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to upload avatar');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>{error.message || 'Failed to upload avatar'}</ToastDescription>
+          </Toast>
+        ),
+      });
       console.error(error);
     } finally {
       resetProgress();
@@ -101,170 +156,100 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
-
-      <TouchableOpacity onPress={handlePickImage} disabled={isUploading}>
-        <View style={styles.avatarContainer}>
-          {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarPlaceholderText}>
-                {profile?.nickname?.[0]?.toUpperCase() || 'U'}
-              </Text>
-            </View>
-          )}
-          {isUploading && (
-            <View style={styles.uploadingOverlay}>
-              <ActivityIndicator color="white" />
-              <Text style={styles.uploadingText}>
-                {Math.round(uploadProgress * 100)}%
-              </Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.changePhotoText}>Change Photo</Text>
-      </TouchableOpacity>
-
-      <Controller
-        control={control}
-        name="nickname"
-        rules={{
-          required: 'Nickname is required',
-          minLength: {
-            value: 3,
-            message: 'Nickname must be at least 3 characters',
-          },
-          maxLength: {
-            value: 20,
-            message: 'Nickname must be less than 20 characters',
-          },
-          pattern: {
-            value: /^[a-zA-Z0-9_]+$/,
-            message: 'Nickname can only contain letters, numbers, and underscores',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nickname</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nickname"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-            />
-            {errors.nickname && (
-              <Text style={styles.error}>{errors.nickname.message}</Text>
-            )}
-          </View>
-        )}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, (saving || isUploading) && styles.buttonDisabled]}
-        onPress={handleSubmit(onSave)}
-        disabled={saving || isUploading}
-      >
-        <Text style={styles.buttonText}>
-          {saving ? 'Saving...' : 'Save Changes'}
+    <Box flex={1} bg="$white" p="$5">
+      <VStack space="$6">
+        <Text size="2xl" bold mb="$4">
+          Profile
         </Text>
-      </TouchableOpacity>
-    </View>
+
+        <Button variant="link" onPress={handlePickImage} isDisabled={isUploading} alignSelf="center">
+          <VStack space="$2" alignItems="center">
+            <Box position="relative">
+              <Avatar size="2xl" bg="$primary500">
+                {profile?.avatar_url ? (
+                  <AvatarImage source={{ uri: profile.avatar_url }} alt="Profile" />
+                ) : (
+                  <AvatarFallbackText>
+                    {profile?.nickname?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallbackText>
+                )}
+              </Avatar>
+              {isUploading && (
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  bottom={0}
+                  bg="rgba(0, 0, 0, 0.5)"
+                  borderRadius="$full"
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Spinner color="$white" />
+                  <Text color="$white" mt="$1" fontWeight="$semibold">
+                    {Math.round(uploadProgress * 100)}%
+                  </Text>
+                </Box>
+              )}
+            </Box>
+            <Text color="$primary500" size="md">
+              Change Photo
+            </Text>
+          </VStack>
+        </Button>
+
+        <FormControl isInvalid={!!errors.nickname}>
+          <FormControlLabel>
+            <FormControlLabelText>Nickname</FormControlLabelText>
+          </FormControlLabel>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be less than 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+
+        <Button
+          isDisabled={saving || isUploading}
+          onPress={handleSubmit(onSave)}
+          mt="$2"
+        >
+          {saving ? (
+            <ButtonSpinner />
+          ) : (
+            <ButtonText>Save Changes</ButtonText>
+          )}
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
-  },
-  avatarContainer: {
-    alignSelf: 'center',
-    marginBottom: 10,
-    position: 'relative',
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarPlaceholderText: {
-    fontSize: 48,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  uploadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  uploadingText: {
-    color: 'white',
-    marginTop: 5,
-    fontWeight: '600',
-  },
-  changePhotoText: {
-    color: '#007AFF',
-    textAlign: 'center',
-    fontSize: 16,
-    marginBottom: 30,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
