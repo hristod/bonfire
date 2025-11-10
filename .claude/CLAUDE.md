@@ -90,19 +90,44 @@ app/app/
 
 ## Code Conventions
 
-### UI Components
+### Gluestack UI Patterns
 
-**IMPORTANT: Always use gluestack-ui components when available.**
+**Always use gluestack-ui components:**
+- Box/VStack/HStack for layout (never View)
+- Text component with size/color props
+- FormControl for all form fields with labels and errors
+- Input + InputField for text inputs
+- Button + ButtonText + ButtonSpinner for buttons
+- Toast via useToast() hook (never Alert.alert)
+- Spacing via `space` prop on VStack/HStack
+- Styling via gluestack props (bg, p, m, etc.) - no StyleSheet
 
-- Before creating custom UI components, check gluestack-ui documentation via context7
-- Use Context7 MCP tool to fetch latest gluestack-ui docs: `/gluestack-ui/gluestack-ui`
-- Only use React Native primitives (View, Text, TouchableOpacity, etc.) when gluestack doesn't have an equivalent
-- Examples of gluestack components to use:
-  - `Button` instead of TouchableOpacity + Text
-  - `Input` instead of TextInput
-  - `Box` instead of View
-  - `Text` component with variants
-  - `VStack`, `HStack` instead of View with flexDirection
+**Form pattern:**
+```typescript
+<FormControl isInvalid={!!errors.field}>
+  <FormControlLabel>
+    <FormControlLabelText>Label</FormControlLabelText>
+  </FormControlLabel>
+  <Controller render={...} />
+  <FormControlError>
+    <FormControlErrorText>{errors.field?.message}</FormControlErrorText>
+  </FormControlError>
+</FormControl>
+```
+
+**Toast pattern:**
+```typescript
+const toast = useToast();
+toast.show({
+  placement: 'top',
+  render: ({ id }) => (
+    <Toast nativeID={id} action="error" variant="solid">
+      <ToastTitle>Error</ToastTitle>
+      <ToastDescription>{message}</ToastDescription>
+    </Toast>
+  ),
+});
+```
 
 **Why gluestack-ui:**
 - Consistent design system across the app
@@ -130,7 +155,7 @@ app/app/
 - Functional components with TypeScript interfaces for props
 - Default exports for screens/pages
 - Named exports for reusable components
-- StyleSheet.create for all styles
+- Use gluestack-ui props for styling (no StyleSheet.create)
 - Loading states and disabled states on interactive elements
 
 ### File Organization

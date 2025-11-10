@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
-import { config } from '@gluestack-ui/config';
+import { config } from '../config/gluestack-theme.config';
 import { useAuthStore } from '../store/authStore';
-import { View, ActivityIndicator } from 'react-native';
+import { Box, Spinner } from '@gluestack-ui/themed';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -30,9 +30,9 @@ export default function RootLayout() {
 
   if (!initialized || loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Box flex={1} justifyContent="center" alignItems="center">
+        <Spinner size="large" />
+      </Box>
     );
   }
 

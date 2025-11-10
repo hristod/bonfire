@@ -1,5 +1,25 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  Box,
+  VStack,
+  Text,
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  FormControlHelper,
+  FormControlHelperText,
+  Input,
+  InputField,
+  useToast,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+} from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../../store/authStore';
@@ -14,10 +34,19 @@ export default function SelectNicknameScreen() {
   const [loading, setLoading] = useState(false);
   const { user, setPendingNickname } = useAuthStore();
   const { control, handleSubmit, formState: { errors }, setError } = useForm<NicknameForm>();
+  const toast = useToast();
 
   const onSubmit = async (data: NicknameForm) => {
     if (!user) {
-      Alert.alert('Error', 'No user found');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>No user found</ToastDescription>
+          </Toast>
+        ),
+      });
       return;
     }
 
@@ -44,120 +73,87 @@ export default function SelectNicknameScreen() {
       router.replace('/(app)');
     } catch (error) {
       console.error('Error updating nickname:', error);
-      Alert.alert('Error', 'Unable to save nickname. Please try again.');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={id} action="error" variant="solid">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>Unable to save nickname. Please try again.</ToastDescription>
+          </Toast>
+        ),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Choose Your Nickname</Text>
-      <Text style={styles.subtitle}>
-        The auto-generated nickname is already taken. Please choose a different one.
-      </Text>
-
-      <Controller
-        control={control}
-        name="nickname"
-        rules={{
-          required: 'Nickname is required',
-          minLength: {
-            value: 3,
-            message: 'Nickname must be at least 3 characters',
-          },
-          maxLength: {
-            value: 20,
-            message: 'Nickname must be at most 20 characters',
-          },
-          pattern: {
-            value: /^[a-zA-Z0-9_]+$/,
-            message: 'Nickname can only contain letters, numbers, and underscores',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Nickname"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-              autoFocus
-            />
-            {errors.nickname && (
-              <Text style={styles.error}>{errors.nickname.message}</Text>
-            )}
-            <Text style={styles.hint}>3-20 characters, letters, numbers, and underscores only</Text>
-          </View>
-        )}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Saving...' : 'Continue'}
+    <Box flex={1} bg="$white" p="$5" justifyContent="center">
+      <VStack space="$4">
+        <Text size="2xl" bold textAlign="center" mb="$2">
+          Choose Your Nickname
         </Text>
-      </TouchableOpacity>
-    </View>
+        <Text size="md" color="$textLight500" textAlign="center" mb="$4">
+          The auto-generated nickname is already taken. Please choose a different one.
+        </Text>
+
+        <FormControl isInvalid={!!errors.nickname}>
+          <FormControlLabel>
+            <FormControlLabelText>Nickname</FormControlLabelText>
+          </FormControlLabel>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be at most 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  autoFocus
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+          <FormControlHelper>
+            <FormControlHelperText>
+              3-20 characters, letters, numbers, and underscores only
+            </FormControlHelperText>
+          </FormControlHelper>
+        </FormControl>
+
+        <Button
+          isDisabled={loading}
+          onPress={handleSubmit(onSubmit)}
+          mt="$2"
+        >
+          {loading ? (
+            <ButtonSpinner />
+          ) : (
+            <ButtonText>Continue</ButtonText>
+          )}
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-  },
-  hint: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
