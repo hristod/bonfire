@@ -90,6 +90,27 @@ app/app/
 
 ## Code Conventions
 
+### UI Components
+
+**IMPORTANT: Always use gluestack-ui components when available.**
+
+- Before creating custom UI components, check gluestack-ui documentation via context7
+- Use Context7 MCP tool to fetch latest gluestack-ui docs: `/gluestack-ui/gluestack-ui`
+- Only use React Native primitives (View, Text, TouchableOpacity, etc.) when gluestack doesn't have an equivalent
+- Examples of gluestack components to use:
+  - `Button` instead of TouchableOpacity + Text
+  - `Input` instead of TextInput
+  - `Box` instead of View
+  - `Text` component with variants
+  - `VStack`, `HStack` instead of View with flexDirection
+
+**Why gluestack-ui:**
+- Consistent design system across the app
+- Built-in accessibility
+- Theme support
+- Responsive utilities
+- Type-safe component props
+
 ### TypeScript
 
 - Strict mode enabled
