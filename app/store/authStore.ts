@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { Profile } from '@bonfire/shared';
 import { supabase } from '../lib/supabase';
+import { generateNickname, createProfileWithNickname } from '../lib/profile-utils';
 
 interface AuthStore {
   user: User | null;
@@ -98,24 +99,48 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       // Listen for auth changes and store subscription
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         setAuth(session?.user ?? null, session);
 
         if (session?.user) {
+          // Fetch profile
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
-          if (profileError) {
+          if (profileError && profileError.code !== 'PGRST116') {
             console.error('Error fetching profile on auth change:', profileError);
-            // Don't throw - user is authenticated even if profile fetch fails
           } else if (profile) {
             setProfile(profile);
+            set({ pendingNickname: false });
+          } else if (event === 'SIGNED_IN') {
+            // No profile exists - this is OAuth sign-up
+            // Generate and try to create profile
+            const nickname = generateNickname(session.user);
+            const created = await createProfileWithNickname(session.user.id, nickname);
+
+            if (created) {
+              // Profile created successfully, fetch it
+              const { data: newProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+              if (newProfile) {
+                setProfile(newProfile);
+                set({ pendingNickname: false });
+              }
+            } else {
+              // Nickname conflict - need user to choose
+              set({ pendingNickname: true });
+            }
           }
         } else {
           setProfile(null);
+          set({ pendingNickname: false });
         }
       });
 
