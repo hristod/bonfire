@@ -3,6 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
+import { useAuthStore } from '../../store/authStore';
+import { signInWithApple, signInWithGoogle } from '../../lib/supabase-oauth';
+import OAuthButton from '../../components/OAuthButton';
 
 interface SignUpForm {
   email: string;
@@ -14,6 +17,29 @@ export default function SignUpScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<SignUpForm>();
+  const { oauthLoading, setOAuthLoading } = useAuthStore();
+
+  const handleOAuthSignIn = async (provider: 'apple' | 'google') => {
+    setOAuthLoading(true);
+
+    try {
+      const { error } = provider === 'apple'
+        ? await signInWithApple()
+        : await signInWithGoogle();
+
+      if (error) {
+        if (error.message !== 'User cancelled') {
+          Alert.alert('Error', 'Authentication failed. Please try again.');
+        }
+      }
+      // Success handling happens in auth state listener
+    } catch (error) {
+      console.error('OAuth error:', error);
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setOAuthLoading(false);
+    }
+  };
 
   const onSignUp = async (data: SignUpForm) => {
     setLoading(true);
@@ -43,6 +69,24 @@ export default function SignUpScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
+
+      <OAuthButton
+        provider="apple"
+        onPress={() => handleOAuthSignIn('apple')}
+        loading={oauthLoading}
+      />
+
+      <OAuthButton
+        provider="google"
+        onPress={() => handleOAuthSignIn('google')}
+        loading={oauthLoading}
+      />
+
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>or continue with</Text>
+        <View style={styles.dividerLine} />
+      </View>
 
       <Controller
         control={control}
@@ -197,5 +241,20 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     textAlign: 'center',
     marginTop: 15,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#666',
+    fontSize: 14,
   },
 });
