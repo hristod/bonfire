@@ -183,6 +183,56 @@ app/
 - Generate types after migrations: `pnpm supabase:types`
 - Types exported to `shared/types/database.types.ts`
 
+### Git Worktrees with Supabase
+
+**Problem:** Supabase CLI initializes based on directory name, causing conflicts when using worktrees with custom names.
+
+**Solution:** Always use `--workdir` flag with Supabase CLI commands to point to the project root containing `supabase/` directory.
+
+**Project structure:**
+```
+bonfire/                          # Main git repository
+├── .worktrees/                   # Worktrees directory (gitignored)
+│   └── feature-name/             # Feature worktree
+│       ├── supabase/             # Supabase config (lives here)
+│       ├── app/                  # Expo app
+│       └── package.json          # Scripts with --workdir flag
+└── supabase/                     # Does NOT exist in main repo
+```
+
+**All package.json scripts use `--workdir .`:**
+```json
+{
+  "scripts": {
+    "supabase:start": "supabase start --workdir .",
+    "supabase:stop": "supabase stop --workdir .",
+    "supabase:reset": "supabase db reset --workdir .",
+    "supabase:status": "supabase status --workdir .",
+    "supabase:types": "supabase gen types typescript --local --workdir . > shared/types/supabase.ts"
+  }
+}
+```
+
+**Manual commands:**
+```bash
+# Always include --workdir . when in a worktree
+supabase start --workdir .
+supabase status --workdir .
+supabase migration new my_migration --workdir .
+```
+
+**Best practices:**
+1. Always use `--workdir` flag when working in worktrees
+2. Use unique `project_id` in each worktree's `supabase/config.toml` to avoid Docker conflicts
+3. Run commands from worktree root where `supabase/` directory exists
+4. Use npm/pnpm scripts rather than direct CLI commands
+
+**Troubleshooting:**
+- "cannot read config" error means Supabase is looking in wrong directory - verify `--workdir .` flag
+- Multiple Supabase instances running: stop all Docker containers and restart with correct flag
+
+See `docs/SUPABASE_WORKTREE_SETUP.md` for full details.
+
 ### OAuth Configuration
 
 - Requires manual setup in Supabase Dashboard (see `docs/SUPABASE_OAUTH_SETUP.md`)
