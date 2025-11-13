@@ -14,7 +14,8 @@ module.exports = {
     assetBundlePatterns: ['**/*'],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.bonfire.app'
+      bundleIdentifier: 'com.bonfire.app',
+      usesAppleSignIn: true
     },
     android: {
       adaptiveIcon: {
@@ -26,11 +27,25 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png'
     },
-    plugins: ['expo-router'],
+    plugins: [
+      'expo-router',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            enableProguardInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+          },
+        },
+      ],
+    ],
     scheme: 'bonfire',
     extra: {
       EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
       EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      eas: {
+        projectId: '4502d063-084a-4b12-9437-6f7a79106bf6',
+      },
     }
   }
 };
