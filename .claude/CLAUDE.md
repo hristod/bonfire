@@ -30,6 +30,8 @@ Bonfire is a **mobile-native React Native application** built with Expo and Supa
 
 **Migration Note (2025-01):** Migrated from Gluestack UI v1 to v3. See `docs/MIGRATION_GLUESTACK_V3.md` for details.
 
+**Migration Note (2025-01):** Migrated from Gluestack UI v1 to v3. See `docs/MIGRATION_GLUESTACK_V3.md` for details.
+
 ## Architecture Patterns
 
 ### Authentication System
