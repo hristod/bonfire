@@ -244,7 +244,7 @@ export default function ProfileScreen() {
           mt="$2"
         >
           {saving ? (
-            <ButtonSpinner />
+            <ButtonSpinner color="$white" />
           ) : (
             <ButtonText>Save Changes</ButtonText>
           )}

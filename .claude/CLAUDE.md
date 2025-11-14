@@ -2,17 +2,31 @@
 
 ## Project Overview
 
-Bonfire is a React Native mobile application built with Expo and Supabase. The app provides social authentication and user profiles with a focus on clean architecture and production-ready code.
+Bonfire is a **mobile-native React Native application** built with Expo and Supabase. The app provides social authentication and user profiles with a focus on clean architecture and production-ready code.
+
+**CRITICAL: This is a MOBILE APP, not a website.** All UX patterns, component choices, and development decisions must prioritize mobile-native experiences:
+- No web-style patterns (hover states, "remember me" checkboxes, cookie banners)
+- Mobile-first UX (haptic feedback, native keyboards, pull-to-refresh, gesture navigation)
+- Platform-specific behaviors (iOS/Android differences)
+- Touch-optimized interactions
+- Native loading indicators and feedback
 
 ## Tech Stack
 
-- **Frontend:** React Native with TypeScript
-- **Framework:** Expo with Expo Router (file-based routing)
-- **Backend:** Supabase (Auth, Database, Storage)
-- **State Management:** Zustand
-- **Forms:** React Hook Form
-- **UI Library:** gluestack-ui
+**Current (as of 2025-01):**
+- **Frontend:** React Native 0.81.5 with TypeScript 5.9.2
+- **Framework:** Expo SDK 54.0.23 with Expo Router 6.0.14 (file-based routing)
+- **Backend:** Supabase 2.80.0 (Auth, Database, Storage)
+- **State Management:** Zustand 5.0.8
+- **Forms:** React Hook Form 7.66.0
+- **UI Library:** Gluestack UI v1.1.73 (with @gluestack-style/react)
 - **Package Manager:** pnpm
+- **React:** 19.1.0
+
+**Planned Migration:**
+- **UI Library:** Migrate to Gluestack UI v3.0.0 (copy-pasteable components with NativeWind)
+- **Styling:** Add NativeWind v4 + Tailwind CSS v3.4 (replacing gluestack-style)
+- See `docs/plans/` for migration design document
 
 ## Architecture Patterns
 
@@ -150,13 +164,25 @@ toast.show({
 - Use Supabase error codes for specific handling (e.g., `23505` for unique constraint violations)
 - Filter "User cancelled" OAuth errors - don't show as errors to users
 
-### Component Patterns
+### Component Patterns (Mobile-Native)
 
 - Functional components with TypeScript interfaces for props
 - Default exports for screens/pages
 - Named exports for reusable components
 - Use gluestack-ui props for styling (no StyleSheet.create)
 - Loading states and disabled states on interactive elements
+
+**Mobile-specific patterns:**
+- Native ActivityIndicator for loading states (platform-aware)
+- KeyboardAvoidingView for forms (iOS: padding, Android: height)
+- Safe area insets for notch/dynamic island support
+- Haptic feedback for important interactions (expo-haptics)
+- Platform-specific navigation (BackHandler on Android)
+- Pull-to-refresh for data screens (RefreshControl)
+- Native keyboard types (email-address, numeric, etc.)
+- Optimistic UI updates for instant feedback
+- Toast placement at top (thumb-friendly on mobile)
+- Accessibility labels for VoiceOver/TalkBack
 
 ### File Organization
 

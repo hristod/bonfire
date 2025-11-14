@@ -148,7 +148,7 @@ export default function SelectNicknameScreen() {
           mt="$2"
         >
           {loading ? (
-            <ButtonSpinner />
+            <ButtonSpinner color="$white" />
           ) : (
             <ButtonText>Continue</ButtonText>
           )}

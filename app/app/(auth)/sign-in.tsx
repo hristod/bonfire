@@ -205,7 +205,7 @@ export default function SignInScreen() {
           mt="$2"
         >
           {loading ? (
-            <ButtonSpinner />
+            <ButtonSpinner color="$white" />
           ) : (
             <ButtonText>Sign In</ButtonText>
           )}
