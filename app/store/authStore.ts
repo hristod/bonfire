@@ -72,29 +72,42 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { setAuth, setProfile, setLoading, setInitialized } = get();
 
     try {
-      // Get initial session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Get initial session with error handling for network issues
+      let session: Session | null = null;
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        console.error('Error getting session:', sessionError);
-        throw sessionError;
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          // Continue without throwing - app should work offline
+        } else {
+          session = data.session;
+        }
+      } catch (networkError) {
+        // Catch network errors (e.g., fetch failed) and continue
+        console.error('Network error getting session:', networkError);
+        // App will work in offline mode
       }
 
       if (session) {
         setAuth(session.user, session);
 
-        // Fetch profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        // Fetch profile with error handling
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          // Don't throw - user is authenticated even if profile fetch fails
-        } else if (profile) {
-          setProfile(profile);
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            // Don't throw - user is authenticated even if profile fetch fails
+          } else if (profile) {
+            setProfile(profile);
+          }
+        } catch (networkError) {
+          console.error('Network error fetching profile:', networkError);
         }
       }
 
@@ -104,39 +117,43 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         if (session?.user) {
           // Fetch profile
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching profile on auth change:', profileError);
-          } else if (profile) {
-            setProfile(profile);
-            set({ pendingNickname: false });
-          } else if (event === 'SIGNED_IN') {
-            // No profile exists - this is OAuth sign-up
-            // Generate and try to create profile
-            const nickname = generateNickname(session.user);
-            const created = await createProfileWithNickname(session.user.id, nickname);
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error('Error fetching profile on auth change:', profileError);
+            } else if (profile) {
+              setProfile(profile);
+              set({ pendingNickname: false });
+            } else if (event === 'SIGNED_IN') {
+              // No profile exists - this is OAuth sign-up
+              // Generate and try to create profile
+              const nickname = generateNickname(session.user);
+              const created = await createProfileWithNickname(session.user.id, nickname);
 
-            if (created) {
-              // Profile created successfully, fetch it
-              const { data: newProfile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+              if (created) {
+                // Profile created successfully, fetch it
+                const { data: newProfile } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', session.user.id)
+                  .single();
 
-              if (newProfile) {
-                setProfile(newProfile);
-                set({ pendingNickname: false });
+                if (newProfile) {
+                  setProfile(newProfile);
+                  set({ pendingNickname: false });
+                }
+              } else {
+                // Nickname conflict - need user to choose
+                set({ pendingNickname: true });
               }
-            } else {
-              // Nickname conflict - need user to choose
-              set({ pendingNickname: true });
             }
+          } catch (networkError) {
+            console.error('Network error in auth state change:', networkError);
           }
         } else {
           setProfile(null);
@@ -148,7 +165,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ subscription });
     } catch (error) {
       console.error('Failed to initialize auth:', error);
-      throw error;
+      // Don't re-throw - allow app to continue in offline mode
     } finally {
       setLoading(false);
       setInitialized(true);
