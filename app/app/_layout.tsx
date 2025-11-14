@@ -1,9 +1,9 @@
+import '../global.css';
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { GluestackUIProvider } from '@gluestack-ui/themed';
-import { config } from '../config/gluestack-theme.config';
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '../store/authStore';
-import { Box, Spinner } from '@gluestack-ui/themed';
+import { View, ActivityIndicator } from 'react-native';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -20,16 +20,22 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!user && !inAuthGroup) {
-      // Redirect to sign in if not authenticated
       router.replace('/(auth)/sign-in');
     } else if (user && inAuthGroup) {
-      // Redirect to app if authenticated
       router.replace('/(app)');
     }
   }, [user, initialized, loading, segments]);
 
+  if (!initialized || loading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#8B5CF6" />
+      </View>
+    );
+  }
+
   return (
-    <GluestackUIProvider config={config}>
+    <GluestackUIProvider mode="light">
       <Slot />
       {(!initialized || loading) && (
         <Box

@@ -13,13 +13,13 @@ Bonfire is a **mobile-native React Native application** built with Expo and Supa
 
 ## Tech Stack
 
-**Current (as of 2025-01):**
-- **Frontend:** React Native 0.81.5 with TypeScript 5.9.2
-- **Framework:** Expo SDK 54.0.23 with Expo Router 6.0.14 (file-based routing)
-- **Backend:** Supabase 2.80.0 (Auth, Database, Storage)
-- **State Management:** Zustand 5.0.8
-- **Forms:** React Hook Form 7.66.0
-- **UI Library:** Gluestack UI v1.1.73 (with @gluestack-style/react)
+- **Frontend:** React Native with TypeScript
+- **Framework:** Expo with Expo Router (file-based routing)
+- **Backend:** Supabase (Auth, Database, Storage)
+- **State Management:** Zustand
+- **Forms:** React Hook Form
+- **UI Library:** Gluestack UI v3 (copy-pasteable components)
+- **Styling:** NativeWind v4 + Tailwind CSS v3.4
 - **Package Manager:** pnpm
 - **React:** 19.1.0
 
@@ -27,6 +27,8 @@ Bonfire is a **mobile-native React Native application** built with Expo and Supa
 - **UI Library:** Migrate to Gluestack UI v3.0.0 (copy-pasteable components with NativeWind)
 - **Styling:** Add NativeWind v4 + Tailwind CSS v3.4 (replacing gluestack-style)
 - See `docs/plans/` for migration design document
+
+**Migration Note (2025-01):** Migrated from Gluestack UI v1 to v3. See `docs/MIGRATION_GLUESTACK_V3.md` for details.
 
 ## Architecture Patterns
 
@@ -104,17 +106,36 @@ app/app/
 
 ## Code Conventions
 
-### Gluestack UI Patterns
+### Gluestack UI v3 + NativeWind Patterns
 
-**Always use gluestack-ui components:**
-- Box/VStack/HStack for layout (never View)
-- Text component with size/color props
-- FormControl for all form fields with labels and errors
-- Input + InputField for text inputs
-- Button + ButtonText + ButtonSpinner for buttons
-- Toast via useToast() hook (never Alert.alert)
-- Spacing via `space` prop on VStack/HStack
-- Styling via gluestack props (bg, p, m, etc.) - no StyleSheet
+**Component Usage:**
+- Use React Native's `View` with `className` for layout (not Box)
+- Custom `VStack`/`HStack` components from `@/components/ui/` for flex layouts
+- React Native's `Text` with `className` for typography
+- Gluestack v3 components from `@/components/ui/*` (Button, Input, FormControl, Toast)
+- Styling via Tailwind CSS `className` prop (no utility props, no StyleSheet)
+- Use `ActivityIndicator` from React Native for loading states
+
+**Import pattern:**
+```typescript
+import { View, Text, ActivityIndicator } from 'react-native';
+import { VStack } from '@/components/ui/vstack';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { FormControl, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
+```
+
+**Styling pattern:**
+```typescript
+<View className="bg-white p-4 rounded-md">
+  <Text className="text-primary-500 text-lg font-bold">
+    Hello World
+  </Text>
+  <Button className="bg-primary-600 active:bg-primary-700">
+    <ButtonText className="text-white">Click Me</ButtonText>
+  </Button>
+</View>
+```
 
 **Form pattern:**
 ```typescript
@@ -122,7 +143,15 @@ app/app/
   <FormControlLabel>
     <FormControlLabelText>Label</FormControlLabelText>
   </FormControlLabel>
-  <Controller render={...} />
+  <Controller render={({ field }) => (
+    <Input>
+      <InputField
+        placeholder="Enter value"
+        value={field.value}
+        onChangeText={field.onChange}
+      />
+    </Input>
+  )} />
   <FormControlError>
     <FormControlErrorText>{errors.field?.message}</FormControlErrorText>
   </FormControlError>
@@ -143,12 +172,54 @@ toast.show({
 });
 ```
 
-**Why gluestack-ui:**
-- Consistent design system across the app
-- Built-in accessibility
-- Theme support
-- Responsive utilities
-- Type-safe component props
+**Loading states:**
+```typescript
+import { ActivityIndicator } from 'react-native';
+
+<Button disabled={loading}>
+  {loading ? (
+    <ActivityIndicator size="small" color="white" />
+  ) : (
+    <ButtonText>Submit</ButtonText>
+  )}
+</Button>
+```
+
+**Mobile UX patterns:**
+```typescript
+// Keyboard handling
+import { KeyboardAvoidingView, Platform } from 'react-native';
+
+<KeyboardAvoidingView
+  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  className="flex-1"
+>
+  <ScrollView>
+    {/* Form content */}
+  </ScrollView>
+</KeyboardAvoidingView>
+
+// Pull-to-refresh
+import { RefreshControl } from 'react-native';
+
+<ScrollView
+  refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+  }
+>
+  {/* Content */}
+</ScrollView>
+```
+
+**Why Gluestack v3 + NativeWind:**
+- **Copy-pasteable components** - Full control over UI layer
+- **Tailwind CSS** - Industry-standard styling with excellent tooling
+- **Better tree-shaking** - Only bundle components you use
+- **Familiar syntax** - Same as web development
+- **NativeWind** - Tailwind for React Native with full compatibility
+- **Type-safe** - TypeScript support throughout
+- **Accessible** - Built-in accessibility features
+- **Mobile-native UX** - Platform-specific behaviors and patterns
 
 ### TypeScript
 
@@ -169,8 +240,9 @@ toast.show({
 - Functional components with TypeScript interfaces for props
 - Default exports for screens/pages
 - Named exports for reusable components
-- Use gluestack-ui props for styling (no StyleSheet.create)
-- Loading states and disabled states on interactive elements
+- Use Tailwind `className` for styling (no StyleSheet.create, no utility props)
+- Loading states with `ActivityIndicator` and disabled states on interactive elements
+- Mobile-native patterns: `KeyboardAvoidingView`, `RefreshControl`, platform-specific behavior
 
 **Mobile-specific patterns:**
 - Native ActivityIndicator for loading states (platform-aware)
@@ -190,8 +262,20 @@ toast.show({
 app/
 ├── app/                 # Expo Router pages (screens)
 ├── components/          # Reusable UI components
+│   └── ui/             # Gluestack v3 copy-pasteable components
+│       ├── button/
+│       ├── input/
+│       ├── form-control/
+│       ├── toast/
+│       ├── vstack/
+│       ├── hstack/
+│       └── gluestack-ui-provider/
 ├── lib/                # Utilities, helpers, Supabase client
 ├── store/              # Zustand state stores
+├── tailwind.config.js  # Tailwind CSS configuration
+├── global.css          # Tailwind directives
+├── metro.config.js     # Metro bundler with NativeWind
+├── babel.config.js     # Babel with NativeWind preset
 └── package.json
 ```
 
