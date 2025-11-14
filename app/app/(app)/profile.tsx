@@ -1,48 +1,50 @@
 import { useState } from 'react';
-import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Button,
-  ButtonText,
-  ButtonSpinner,
-  Avatar,
-  AvatarImage,
-  AvatarFallbackText,
-  FormControl,
-  FormControlLabel,
-  FormControlLabelText,
-  FormControlError,
-  FormControlErrorText,
-  Input,
-  InputField,
-  useToast,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  Spinner,
-} from '@gluestack-ui/themed';
+import { View, ScrollView, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../../store/authStore';
 import { useProfileStore } from '../../store/profileStore';
 import { supabase } from '../../lib/supabase';
 import { pickAndUploadAvatar } from '../../lib/uploadAvatar';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+} from '@/components/ui/form-control';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText } from '@/components/ui/button';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ProfileForm {
   nickname: string;
 }
 
 export default function ProfileScreen() {
-  const { profile, user, setProfile } = useAuthStore();
+  const { profile, user, setProfile, initialize } = useAuthStore();
   const { isUploading, uploadProgress, setUploading, setProgress, resetProgress } = useProfileStore();
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<ProfileForm>({
     defaultValues: {
       nickname: profile?.nickname || '',
     },
   });
   const toast = useToast();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await initialize();
+    } catch (error) {
+      console.error('ProfileScreen onRefresh: Failed to refresh profile', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const onSave = async (data: ProfileForm) => {
     if (!user) return;
@@ -95,7 +97,7 @@ export default function ProfileScreen() {
           </Toast>
         ),
       });
-      console.error(error);
+      console.error('ProfileScreen onSave:', error);
     } finally {
       setSaving(false);
     }
@@ -149,107 +151,114 @@ export default function ProfileScreen() {
           </Toast>
         ),
       });
-      console.error(error);
+      console.error('ProfileScreen handlePickImage:', error);
     } finally {
       resetProgress();
     }
   };
 
   return (
-    <Box flex={1} bg="$white" p="$5">
-      <VStack space="$6">
-        <Text size="2xl" bold mb="$4">
-          Profile
-        </Text>
+    <ScrollView
+      className="flex-1 bg-white"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#8B5CF6"
+          colors={['#8B5CF6']}
+        />
+      }
+    >
+      <View className="flex-1 p-5">
+        <VStack space="lg">
+          <Text className="text-3xl font-bold text-typography-900 mb-4">
+            Profile
+          </Text>
 
-        <Button variant="link" onPress={handlePickImage} isDisabled={isUploading} alignSelf="center">
-          <VStack space="$2" alignItems="center">
-            <Box position="relative">
-              <Avatar size="2xl" bg="$primary500">
-                {profile?.avatar_url ? (
-                  <AvatarImage source={{ uri: profile.avatar_url }} alt="Profile" />
-                ) : (
-                  <AvatarFallbackText>
-                    {profile?.nickname?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallbackText>
+          <Button
+            variant="link"
+            onPress={handlePickImage}
+            disabled={isUploading}
+            className="self-center"
+          >
+            <VStack space="sm" className="items-center">
+              <View className="relative">
+                <Avatar size="2xl" className="bg-primary-500">
+                  {profile?.avatar_url ? (
+                    <AvatarImage source={{ uri: profile.avatar_url }} alt="Profile" />
+                  ) : (
+                    <AvatarFallbackText>
+                      {profile?.nickname?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallbackText>
+                  )}
+                </Avatar>
+                {isUploading && (
+                  <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 rounded-full justify-center items-center">
+                    <Spinner color="white" />
+                    <Text className="text-white mt-1 font-semibold">
+                      {Math.round(uploadProgress * 100)}%
+                    </Text>
+                  </View>
                 )}
-              </Avatar>
-              {isUploading && (
-                <Box
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                  bottom={0}
-                  bg="rgba(0, 0, 0, 0.5)"
-                  borderRadius="$full"
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <Spinner color="$white" />
-                  <Text color="$white" mt="$1" fontWeight="$semibold">
-                    {Math.round(uploadProgress * 100)}%
-                  </Text>
-                </Box>
+              </View>
+              <Text className="text-primary-500 text-base">
+                Change Photo
+              </Text>
+            </VStack>
+          </Button>
+
+          <FormControl isInvalid={!!errors.nickname}>
+            <FormControlLabel>
+              <FormControlLabelText>Nickname</FormControlLabelText>
+            </FormControlLabel>
+            <Controller
+              control={control}
+              name="nickname"
+              rules={{
+                required: 'Nickname is required',
+                minLength: {
+                  value: 3,
+                  message: 'Nickname must be at least 3 characters',
+                },
+                maxLength: {
+                  value: 20,
+                  message: 'Nickname must be less than 20 characters',
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_]+$/,
+                  message: 'Nickname can only contain letters, numbers, and underscores',
+                },
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input>
+                  <InputField
+                    placeholder="Nickname"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                  />
+                </Input>
               )}
-            </Box>
-            <Text color="$primary500" size="md">
-              Change Photo
-            </Text>
-          </VStack>
-        </Button>
+            />
+            <FormControlError>
+              <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+            </FormControlError>
+          </FormControl>
 
-        <FormControl isInvalid={!!errors.nickname}>
-          <FormControlLabel>
-            <FormControlLabelText>Nickname</FormControlLabelText>
-          </FormControlLabel>
-          <Controller
-            control={control}
-            name="nickname"
-            rules={{
-              required: 'Nickname is required',
-              minLength: {
-                value: 3,
-                message: 'Nickname must be at least 3 characters',
-              },
-              maxLength: {
-                value: 20,
-                message: 'Nickname must be less than 20 characters',
-              },
-              pattern: {
-                value: /^[a-zA-Z0-9_]+$/,
-                message: 'Nickname can only contain letters, numbers, and underscores',
-              },
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input>
-                <InputField
-                  placeholder="Nickname"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  autoCapitalize="none"
-                />
-              </Input>
+          <Button
+            disabled={saving || isUploading}
+            onPress={handleSubmit(onSave)}
+            className="bg-primary-600 active:bg-primary-700 mt-2"
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <ButtonText className="text-white font-semibold">Save Changes</ButtonText>
             )}
-          />
-          <FormControlError>
-            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
-
-        <Button
-          isDisabled={saving || isUploading}
-          onPress={handleSubmit(onSave)}
-          mt="$2"
-        >
-          {saving ? (
-            <ButtonSpinner />
-          ) : (
-            <ButtonText>Save Changes</ButtonText>
-          )}
-        </Button>
-      </VStack>
-    </Box>
+          </Button>
+        </VStack>
+      </View>
+    </ScrollView>
   );
 }

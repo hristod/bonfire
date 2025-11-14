@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, ButtonText, ButtonSpinner } from '@gluestack-ui/themed';
+import { ActivityIndicator } from 'react-native';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Provider } from '@supabase/supabase-js';
 
 interface OAuthButtonProps {
@@ -15,15 +16,16 @@ export default function OAuthButton({ provider, onPress, loading = false }: OAut
   return (
     <Button
       variant={isApple ? "solid" : "outline"}
-      bg={isApple ? "$black" : undefined}
-      isDisabled={loading}
+      className={isApple ? "bg-black active:bg-gray-900" : "border-typography-300 active:bg-gray-50"}
+      disabled={loading}
       onPress={onPress}
-      mb="$2.5"
     >
       {loading ? (
-        <ButtonSpinner color={isApple ? "$white" : "$black"} />
+        <ActivityIndicator size="small" color={isApple ? "white" : "black"} />
       ) : (
-        <ButtonText>{buttonText}</ButtonText>
+        <ButtonText className={isApple ? "text-white" : "text-black"}>
+          {buttonText}
+        </ButtonText>
       )}
     </Button>
   );
