@@ -1,7 +1,14 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { FormControl, FormControlError, FormControlErrorText, FormControlHelper, FormControlHelperText } from '@/components/ui/form-control';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { useAuthStore } from '../../store/authStore';
 import { updateProfileNickname, isNicknameAvailable } from '../../lib/profile-utils';
 
@@ -14,10 +21,21 @@ export default function SelectNicknameScreen() {
   const [loading, setLoading] = useState(false);
   const { user, setPendingNickname } = useAuthStore();
   const { control, handleSubmit, formState: { errors }, setError } = useForm<NicknameForm>();
+  const toast = useToast();
 
   const onSubmit = async (data: NicknameForm) => {
     if (!user) {
-      Alert.alert('Error', 'No user found');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>No user found</ToastDescription>
+            </VStack>
+          </Toast>
+        ),
+      });
       return;
     }
 
@@ -44,120 +62,81 @@ export default function SelectNicknameScreen() {
       router.replace('/(app)');
     } catch (error) {
       console.error('Error updating nickname:', error);
-      Alert.alert('Error', 'Unable to save nickname. Please try again.');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>Unable to save nickname. Please try again.</ToastDescription>
+            </VStack>
+          </Toast>
+        ),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Choose Your Nickname</Text>
-      <Text style={styles.subtitle}>
-        The auto-generated nickname is already taken. Please choose a different one.
-      </Text>
+    <Box className="flex-1 p-5 justify-center">
+      <VStack space="lg">
+        <VStack space="xs">
+          <Heading size="2xl">Choose Your Nickname</Heading>
+          <Text size="sm" className="text-typography-500">
+            The auto-generated nickname is already taken. Please choose a different one.
+          </Text>
+        </VStack>
 
-      <Controller
-        control={control}
-        name="nickname"
-        rules={{
-          required: 'Nickname is required',
-          minLength: {
-            value: 3,
-            message: 'Nickname must be at least 3 characters',
-          },
-          maxLength: {
-            value: 20,
-            message: 'Nickname must be at most 20 characters',
-          },
-          pattern: {
-            value: /^[a-zA-Z0-9_]+$/,
-            message: 'Nickname can only contain letters, numbers, and underscores',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Nickname"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-              autoFocus
-            />
-            {errors.nickname && (
-              <Text style={styles.error}>{errors.nickname.message}</Text>
+        <FormControl isInvalid={!!errors.nickname}>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be at most 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  autoFocus
+                />
+              </Input>
             )}
-            <Text style={styles.hint}>3-20 characters, letters, numbers, and underscores only</Text>
-          </View>
-        )}
-      />
+          />
+          <FormControlHelper>
+            <FormControlHelperText>
+              3-20 characters, letters, numbers, and underscores only
+            </FormControlHelperText>
+          </FormControlHelper>
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Saving...' : 'Continue'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <Button
+          isDisabled={loading}
+          onPress={handleSubmit(onSubmit)}
+        >
+          <ButtonText>{loading ? 'Saving...' : 'Continue'}</ButtonText>
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-  },
-  hint: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
