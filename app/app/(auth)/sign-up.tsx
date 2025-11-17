@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { HStack } from '@/components/ui/hstack';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { FormControl, FormControlError, FormControlErrorText } from '@/components/ui/form-control';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { signInWithApple, signInWithGoogle } from '../../lib/supabase-oauth';
@@ -18,6 +26,7 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<SignUpForm>();
   const { oauthLoading, setOAuthLoading } = useAuthStore();
+  const toast = useToast();
 
   const handleOAuthSignIn = async (provider: 'apple' | 'google') => {
     setOAuthLoading(true);
@@ -29,13 +38,33 @@ export default function SignUpScreen() {
 
       if (error) {
         if (error.message !== 'User cancelled') {
-          Alert.alert('Error', 'Authentication failed. Please try again.');
+          toast.show({
+            placement: 'top',
+            render: ({ id }) => (
+              <Toast nativeID={`toast-${id}`} action="error">
+                <VStack space="xs" className="flex-1">
+                  <ToastTitle>Error</ToastTitle>
+                  <ToastDescription>Authentication failed. Please try again.</ToastDescription>
+                </VStack>
+              </Toast>
+            ),
+          });
         }
       }
       // Success handling happens in auth state listener
     } catch (error) {
       console.error('OAuth error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>An unexpected error occurred</ToastDescription>
+            </VStack>
+          </Toast>
+        ),
+      });
     } finally {
       setOAuthLoading(false);
     }
@@ -56,205 +85,169 @@ export default function SignUpScreen() {
       });
 
       if (error) {
-        Alert.alert('Error', error.message);
+        toast.show({
+          placement: 'top',
+          render: ({ id }) => (
+            <Toast nativeID={`toast-${id}`} action="error">
+              <VStack space="xs" className="flex-1">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>{error.message}</ToastDescription>
+              </VStack>
+            </Toast>
+          ),
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
       console.error(error);
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>An unexpected error occurred</ToastDescription>
+            </VStack>
+          </Toast>
+        ),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+    <Box className="flex-1 p-5 justify-center">
+      <Heading size="2xl" className="mb-8 text-center">Create Account</Heading>
 
-      <OAuthButton
-        provider="apple"
-        onPress={() => handleOAuthSignIn('apple')}
-        loading={oauthLoading}
-      />
+      <VStack space="sm">
+        <OAuthButton
+          provider="apple"
+          onPress={() => handleOAuthSignIn('apple')}
+          loading={oauthLoading}
+        />
 
-      <OAuthButton
-        provider="google"
-        onPress={() => handleOAuthSignIn('google')}
-        loading={oauthLoading}
-      />
+        <OAuthButton
+          provider="google"
+          onPress={() => handleOAuthSignIn('google')}
+          loading={oauthLoading}
+        />
+      </VStack>
 
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or continue with</Text>
-        <View style={styles.dividerLine} />
-      </View>
+      <HStack space="md" className="items-center my-5">
+        <Box className="flex-1 h-px bg-border-300" />
+        <Text size="sm" className="text-typography-500">or continue with</Text>
+        <Box className="flex-1 h-px bg-border-300" />
+      </HStack>
 
-      <Controller
-        control={control}
-        name="email"
-        rules={{
-          required: 'Email is required',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Invalid email address',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            {errors.email && (
-              <Text style={styles.error}>{errors.email.message}</Text>
+      <VStack space="md">
+        <FormControl isInvalid={!!errors.email}>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Email"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </Input>
             )}
-          </View>
-        )}
-      />
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.email?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-      <Controller
-        control={control}
-        name="nickname"
-        rules={{
-          required: 'Nickname is required',
-          minLength: {
-            value: 3,
-            message: 'Nickname must be at least 3 characters',
-          },
-          maxLength: {
-            value: 20,
-            message: 'Nickname must be less than 20 characters',
-          },
-          pattern: {
-            value: /^[a-zA-Z0-9_]+$/,
-            message: 'Nickname can only contain letters, numbers, and underscores',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Nickname"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              autoCapitalize="none"
-            />
-            {errors.nickname && (
-              <Text style={styles.error}>{errors.nickname.message}</Text>
+        <FormControl isInvalid={!!errors.nickname}>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be less than 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                />
+              </Input>
             )}
-          </View>
-        )}
-      />
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-      <Controller
-        control={control}
-        name="password"
-        rules={{
-          required: 'Password is required',
-          minLength: {
-            value: 8,
-            message: 'Password must be at least 8 characters',
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              secureTextEntry
-            />
-            {errors.password && (
-              <Text style={styles.error}>{errors.password.message}</Text>
+        <FormControl isInvalid={!!errors.password}>
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'Password is required',
+              minLength: {
+                value: 8,
+                message: 'Password must be at least 8 characters',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  secureTextEntry
+                />
+              </Input>
             )}
-          </View>
-        )}
-      />
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.password?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSubmit(onSignUp)}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Creating account...' : 'Sign Up'}
-        </Text>
-      </TouchableOpacity>
+        <Button
+          isDisabled={loading}
+          onPress={handleSubmit(onSignUp)}
+          className="mt-2"
+        >
+          <ButtonText>{loading ? 'Creating account...' : 'Sign Up'}</ButtonText>
+        </Button>
 
-      <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
-        <Text style={styles.link}>Already have an account? Sign In</Text>
-      </TouchableOpacity>
-    </View>
+        <Button
+          variant="link"
+          onPress={() => router.push('/(auth)/sign-in')}
+        >
+          <ButtonText>Already have an account? Sign In</ButtonText>
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
-    marginTop: 15,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    color: '#666',
-    fontSize: 14,
-  },
-});
