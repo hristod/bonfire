@@ -1,7 +1,6 @@
 import '@/global.css';
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuthStore } from '../store/authStore';
@@ -37,9 +36,5 @@ export default function RootLayout() {
     );
   }
 
-  return (
-    <GluestackUIProvider>
-      <Slot />
-    </GluestackUIProvider>
-  );
+  return <Slot />;
 }
