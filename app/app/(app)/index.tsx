@@ -1,5 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { Heading } from '@/components/ui/heading';
+import { Button, ButtonText } from '@/components/ui/button';
 import { useAuthStore } from '../../store/authStore';
 
 export default function HomeScreen() {
@@ -11,52 +14,27 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome, {profile?.nickname}!</Text>
+    <Box className="flex-1 p-5 justify-center items-center">
+      <VStack space="lg" className="w-full">
+        <Heading size="2xl" className="text-center mb-5">
+          Welcome, {profile?.nickname}!
+        </Heading>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push('/(app)/profile')}
-      >
-        <Text style={styles.buttonText}>View Profile</Text>
-      </TouchableOpacity>
+        <Button
+          onPress={() => router.push('/(app)/profile')}
+          className="w-full"
+        >
+          <ButtonText>View Profile</ButtonText>
+        </Button>
 
-      <TouchableOpacity
-        style={[styles.button, styles.signOutButton]}
-        onPress={handleSignOut}
-      >
-        <Text style={styles.buttonText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
+        <Button
+          onPress={handleSignOut}
+          action="negative"
+          className="w-full"
+        >
+          <ButtonText>Sign Out</ButtonText>
+        </Button>
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    width: '100%',
-    marginTop: 10,
-  },
-  signOutButton: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
