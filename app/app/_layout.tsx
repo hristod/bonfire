@@ -1,6 +1,7 @@
 import '@/global.css';
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
@@ -31,17 +32,21 @@ export default function RootLayout() {
 
   if (!initialized || loading) {
     return (
-      <GluestackUIProvider mode="light">
-        <Center className="flex-1">
-          <Spinner size="large" />
-        </Center>
-      </GluestackUIProvider>
+      <SafeAreaProvider>
+        <GluestackUIProvider mode="light">
+          <Center className="flex-1">
+            <Spinner size="large" />
+          </Center>
+        </GluestackUIProvider>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <GluestackUIProvider mode="light">
-      <Slot />
-    </GluestackUIProvider>
+    <SafeAreaProvider>
+      <GluestackUIProvider mode="light">
+        <Slot />
+      </GluestackUIProvider>
+    </SafeAreaProvider>
   );
 }

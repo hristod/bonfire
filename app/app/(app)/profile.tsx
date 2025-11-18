@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
@@ -152,8 +153,9 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Box className="flex-1 p-5">
-      <VStack space="lg">
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5">
+        <VStack space="lg">
         <Heading size="2xl" className="mb-5">Profile</Heading>
 
         <Button
@@ -224,14 +226,15 @@ export default function ProfileScreen() {
           </FormControlError>
         </FormControl>
 
-        <Button
-          isDisabled={saving || isUploading}
-          onPress={handleSubmit(onSave)}
-          className="mt-2"
-        >
-          <ButtonText>{saving ? 'Saving...' : 'Save Changes'}</ButtonText>
-        </Button>
-      </VStack>
-    </Box>
+          <Button
+            isDisabled={saving || isUploading}
+            onPress={handleSubmit(onSave)}
+            className="mt-2"
+          >
+            <ButtonText>{saving ? 'Saving...' : 'Save Changes'}</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }

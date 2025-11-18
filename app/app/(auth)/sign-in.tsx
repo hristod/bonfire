@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
@@ -111,10 +112,11 @@ export default function SignInScreen() {
   };
 
   return (
-    <Box className="flex-1 p-5 justify-center">
-      <Heading size="2xl" className="mb-8 text-center">Welcome Back</Heading>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center">
+        <Heading size="2xl" className="mb-8 text-center">Welcome Back</Heading>
 
-      <VStack space="sm">
+        <VStack space="sm">
         <OAuthButton
           provider="apple"
           onPress={() => handleOAuthSignIn('apple')}
@@ -196,13 +198,14 @@ export default function SignInScreen() {
           <ButtonText>{loading ? 'Signing in...' : 'Sign In'}</ButtonText>
         </Button>
 
-        <Button
-          variant="link"
-          onPress={() => router.push('/(auth)/sign-up')}
-        >
-          <ButtonText>Don't have an account? Sign Up</ButtonText>
-        </Button>
-      </VStack>
-    </Box>
+          <Button
+            variant="link"
+            onPress={() => router.push('/(auth)/sign-up')}
+          >
+            <ButtonText>Don't have an account? Sign Up</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }

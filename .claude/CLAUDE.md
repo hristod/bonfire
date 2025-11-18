@@ -90,6 +90,17 @@ app/app/
 
 ## Code Conventions
 
+### Bug Fixing Pattern
+
+**CRITICAL: When fixing any issue on one screen, always check all other screens for the same pattern.**
+
+- If you identify and fix a bug/issue/pattern on one screen, immediately search for the same pattern across ALL screen files
+- Use Glob/Grep to find similar code patterns in `app/(auth)/*.tsx` and `app/(app)/*.tsx`
+- Apply the same fix consistently across all affected screens
+- This prevents inconsistent behavior and reduces future debugging
+
+**Example:** If SafeAreaView styling is wrong on sign-in.tsx, check and fix sign-up.tsx, profile.tsx, index.tsx, etc.
+
 ### UI Components
 
 **IMPORTANT: Always use gluestack-ui components when available.**
@@ -110,6 +121,12 @@ app/app/
 - Theme support
 - Responsive utilities
 - Type-safe component props
+
+**Safe Area Handling:**
+- Always use `SafeAreaView` from `react-native-safe-area-context` (NOT from react-native)
+- SafeAreaView only accepts `style` prop, NOT `className` (NativeWind doesn't work with SafeAreaView)
+- Pattern: `<SafeAreaView style={{ flex: 1 }}><Box className="...">{content}</Box></SafeAreaView>`
+- Root layout must wrap app with `SafeAreaProvider`
 
 ### TypeScript
 

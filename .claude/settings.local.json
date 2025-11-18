@@ -59,7 +59,8 @@
       "Bash(supabase start:*)",
       "Bash(psql:*)",
       "Bash(docker logs:*)",
-      "Bash(npx gluestack-ui@latest init)"
+      "Bash(npx gluestack-ui@latest init)",
+      "mcp__mobile-mcp__mobile_take_screenshot"
     ],
     "deny": [],
     "ask": []

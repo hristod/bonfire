@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
@@ -79,8 +80,9 @@ export default function SelectNicknameScreen() {
   };
 
   return (
-    <Box className="flex-1 p-5 justify-center">
-      <VStack space="lg">
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center">
+        <VStack space="lg">
         <VStack space="xs">
           <Heading size="2xl">Choose Your Nickname</Heading>
           <Text size="sm" className="text-typography-500">
@@ -130,13 +132,14 @@ export default function SelectNicknameScreen() {
           </FormControlError>
         </FormControl>
 
-        <Button
-          isDisabled={loading}
-          onPress={handleSubmit(onSubmit)}
-        >
-          <ButtonText>{loading ? 'Saving...' : 'Continue'}</ButtonText>
-        </Button>
-      </VStack>
-    </Box>
+          <Button
+            isDisabled={loading}
+            onPress={handleSubmit(onSubmit)}
+          >
+            <ButtonText>{loading ? 'Saving...' : 'Continue'}</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }

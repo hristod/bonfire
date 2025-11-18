@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
@@ -14,8 +15,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <Box className="flex-1 p-5 justify-center items-center">
-      <VStack space="lg" className="w-full">
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center items-center">
+        <VStack space="lg" className="w-full">
         <Heading size="2xl" className="text-center mb-5">
           Welcome, {profile?.nickname}!
         </Heading>
@@ -27,14 +29,15 @@ export default function HomeScreen() {
           <ButtonText>View Profile</ButtonText>
         </Button>
 
-        <Button
-          onPress={handleSignOut}
-          action="negative"
-          className="w-full"
-        >
-          <ButtonText>Sign Out</ButtonText>
-        </Button>
-      </VStack>
-    </Box>
+          <Button
+            onPress={handleSignOut}
+            action="negative"
+            className="w-full"
+          >
+            <ButtonText>Sign Out</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }
