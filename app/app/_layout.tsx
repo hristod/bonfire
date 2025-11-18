@@ -1,9 +1,11 @@
-import '../global.css';
+import '@/global.css';
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Center } from '@/components/ui/center';
+import { Spinner } from '@/components/ui/spinner';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '../store/authStore';
-import { View, ActivityIndicator } from 'react-native';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -28,30 +30,21 @@ export default function RootLayout() {
 
   if (!initialized || loading) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#8B5CF6" />
-      </View>
+      <SafeAreaProvider>
+        <GluestackUIProvider mode="light">
+          <Center className="flex-1">
+            <Spinner size="large" />
+          </Center>
+        </GluestackUIProvider>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <GluestackUIProvider mode="light">
-      <Slot />
-      {(!initialized || loading) && (
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          bg="$white"
-        >
-          <Spinner size="large" />
-        </Box>
-      )}
-    </GluestackUIProvider>
+    <SafeAreaProvider>
+      <GluestackUIProvider mode="light">
+        <Slot />
+      </GluestackUIProvider>
+    </SafeAreaProvider>
   );
 }

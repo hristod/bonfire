@@ -4,7 +4,8 @@
   "private": true,
   "description": "Bonfire - Mobile application with React Native + Expo and Supabase backend",
   "scripts": {
-    "dev": "supabase status --workdir . > /dev/null 2>&1 || supabase start --workdir . && cd app && pnpm start",
+    "app:start": "cd app && expo start",
+    "app:start:clear": "cd app && expo start --clear",
     "supabase:start": "supabase start --workdir .",
     "supabase:stop": "supabase stop --workdir .",
     "supabase:reset": "supabase db reset --workdir .",

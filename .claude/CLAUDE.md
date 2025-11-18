@@ -108,24 +108,18 @@ app/app/
 
 ## Code Conventions
 
-### Gluestack UI v3 + NativeWind Patterns
+### Bug Fixing Pattern
 
-**Component Usage:**
-- Use React Native's `View` with `className` for layout (not Box)
-- Custom `VStack`/`HStack` components from `@/components/ui/` for flex layouts
-- React Native's `Text` with `className` for typography
-- Gluestack v3 components from `@/components/ui/*` (Button, Input, FormControl, Toast)
-- Styling via Tailwind CSS `className` prop (no utility props, no StyleSheet)
-- Use `ActivityIndicator` from React Native for loading states
+**CRITICAL: When fixing any issue on one screen, always check all other screens for the same pattern.**
 
-**Import pattern:**
-```typescript
-import { View, Text, ActivityIndicator } from 'react-native';
-import { VStack } from '@/components/ui/vstack';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
-import { FormControl, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
-```
+- If you identify and fix a bug/issue/pattern on one screen, immediately search for the same pattern across ALL screen files
+- Use Glob/Grep to find similar code patterns in `app/(auth)/*.tsx` and `app/(app)/*.tsx`
+- Apply the same fix consistently across all affected screens
+- This prevents inconsistent behavior and reduces future debugging
+
+**Example:** If SafeAreaView styling is wrong on sign-in.tsx, check and fix sign-up.tsx, profile.tsx, index.tsx, etc.
+
+### UI Components
 
 **Styling pattern:**
 ```typescript
@@ -222,6 +216,12 @@ import { RefreshControl } from 'react-native';
 - **Type-safe** - TypeScript support throughout
 - **Accessible** - Built-in accessibility features
 - **Mobile-native UX** - Platform-specific behaviors and patterns
+
+**Safe Area Handling:**
+- Always use `SafeAreaView` from `react-native-safe-area-context` (NOT from react-native)
+- SafeAreaView only accepts `style` prop, NOT `className` (NativeWind doesn't work with SafeAreaView)
+- Pattern: `<SafeAreaView style={{ flex: 1 }}><Box className="...">{content}</Box></SafeAreaView>`
+- Root layout must wrap app with `SafeAreaProvider`
 
 ### TypeScript
 

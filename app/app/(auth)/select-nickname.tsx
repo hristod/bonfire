@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { View, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { FormControl, FormControlError, FormControlErrorText, FormControlHelper, FormControlHelperText } from '@/components/ui/form-control';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { useAuthStore } from '../../store/authStore';
 import { updateProfileNickname, isNicknameAvailable } from '../../lib/profile-utils';
 import {
@@ -49,60 +57,19 @@ export default function SelectNicknameScreen() {
   const [nicknameAvailable, setNicknameAvailable] = useState(false);
   const [nicknameStatus, setNicknameStatus] = useState('3-20 characters, letters, numbers, and underscores only');
   const { user, setPendingNickname } = useAuthStore();
-  const { control, handleSubmit, formState: { errors } } = useForm<NicknameForm>();
+  const { control, handleSubmit, formState: { errors }, setError } = useForm<NicknameForm>();
   const toast = useToast();
-
-  const checkNicknameAvailability = async (nickname: string) => {
-    if (nickname.length < 3) {
-      setNicknameStatus('3-20 characters, letters, numbers, and underscores only');
-      setNicknameAvailable(false);
-      return;
-    }
-
-    const error = validateNickname(nickname);
-    if (error) {
-      setNicknameStatus(error);
-      setNicknameAvailable(false);
-      return;
-    }
-
-    try {
-      const available = await isNicknameAvailable(nickname);
-      if (available) {
-        setNicknameStatus('✓ Nickname is available');
-        setNicknameAvailable(true);
-      } else {
-        setNicknameStatus('This nickname is already taken');
-        setNicknameAvailable(false);
-      }
-    } catch (error) {
-      console.error('Error checking nickname availability:', error);
-      setNicknameStatus('Unable to check availability');
-      setNicknameAvailable(false);
-    }
-  };
 
   const onSubmit = async (data: NicknameForm) => {
     if (!user) {
       toast.show({
         placement: 'top',
         render: ({ id }) => (
-          <Toast nativeID={id} action="error" variant="solid">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>No user found</ToastDescription>
-          </Toast>
-        ),
-      });
-      return;
-    }
-
-    if (!nicknameAvailable) {
-      toast.show({
-        placement: 'top',
-        render: ({ id }) => (
-          <Toast nativeID={id} action="error" variant="solid">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>Please choose an available nickname</ToastDescription>
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>No user found</ToastDescription>
+            </VStack>
           </Toast>
         ),
       });
@@ -123,9 +90,11 @@ export default function SelectNicknameScreen() {
       toast.show({
         placement: 'top',
         render: ({ id }) => (
-          <Toast nativeID={id} action="error" variant="solid">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>Unable to save nickname. Please try again.</ToastDescription>
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>Unable to save nickname. Please try again.</ToastDescription>
+            </VStack>
           </Toast>
         ),
       });
@@ -135,80 +104,66 @@ export default function SelectNicknameScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1"
-    >
-      <ScrollView className="flex-1 bg-white">
-        <View className="p-6">
-          <VStack space="lg">
-            <View>
-              <Text className="text-3xl font-bold text-typography-900 mb-2">
-                Choose Your Nickname
-              </Text>
-              <Text className="text-base text-typography-500">
-                The nickname you wanted is taken. Please choose another.
-              </Text>
-            </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center">
+        <VStack space="lg">
+        <VStack space="xs">
+          <Heading size="2xl">Choose Your Nickname</Heading>
+          <Text size="sm" className="text-typography-500">
+            The auto-generated nickname is already taken. Please choose a different one.
+          </Text>
+        </VStack>
 
-            <FormControl isInvalid={!!errors.nickname}>
-              <FormControlLabel>
-                <FormControlLabelText>Nickname</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={control}
-                name="nickname"
-                rules={{
-                  required: 'Nickname is required',
-                  validate: (value) => {
-                    const error = validateNickname(value);
-                    return error || true;
-                  },
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="your_nickname"
-                      value={value}
-                      onChangeText={(text) => {
-                        const sanitized = sanitizeNickname(text);
-                        onChange(sanitized);
-                        checkNicknameAvailability(sanitized);
-                      }}
-                      autoCapitalize="none"
-                      autoFocus
-                    />
-                  </Input>
-                )}
-              />
-              <FormControlError>
-                <FormControlErrorText>
-                  {errors.nickname?.message}
-                </FormControlErrorText>
-              </FormControlError>
-              <FormControlHelper>
-                <FormControlHelperText className={nicknameAvailable ? 'text-success-500' : 'text-typography-500'}>
-                  {nicknameStatus}
-                </FormControlHelperText>
-              </FormControlHelper>
-            </FormControl>
+        <FormControl isInvalid={!!errors.nickname}>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be at most 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  autoFocus
+                />
+              </Input>
+            )}
+          />
+          <FormControlHelper>
+            <FormControlHelperText>
+              3-20 characters, letters, numbers, and underscores only
+            </FormControlHelperText>
+          </FormControlHelper>
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-            <Button
-              disabled={loading || !nicknameAvailable}
-              onPress={handleSubmit(onSubmit)}
-              className="bg-primary-600 active:bg-primary-700"
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <ButtonText className="text-white font-semibold">
-                  Continue
-                </ButtonText>
-              )}
-            </Button>
-          </VStack>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Button
+            isDisabled={loading}
+            onPress={handleSubmit(onSubmit)}
+          >
+            <ButtonText>{loading ? 'Saving...' : 'Continue'}</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }

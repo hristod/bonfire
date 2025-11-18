@@ -1,11 +1,9 @@
-import {
-  Box,
-  VStack,
-  Text,
-  Button,
-  ButtonText,
-} from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { Heading } from '@/components/ui/heading';
+import { Button, ButtonText } from '@/components/ui/button';
 import { useAuthStore } from '../../store/authStore';
 
 export default function HomeScreen() {
@@ -17,25 +15,29 @@ export default function HomeScreen() {
   };
 
   return (
-    <Box flex={1} bg="$white" p="$5" justifyContent="center" alignItems="center">
-      <VStack space="$4" width="100%">
-        <Text size="xl" bold textAlign="center" mb="$4">
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center items-center">
+        <VStack space="lg" className="w-full">
+        <Heading size="2xl" className="text-center mb-5">
           Welcome, {profile?.nickname}!
-        </Text>
+        </Heading>
 
         <Button
           onPress={() => router.push('/(app)/profile')}
+          className="w-full"
         >
           <ButtonText>View Profile</ButtonText>
         </Button>
 
-        <Button
-          action="negative"
-          onPress={handleSignOut}
-        >
-          <ButtonText>Sign Out</ButtonText>
-        </Button>
-      </VStack>
-    </Box>
+          <Button
+            onPress={handleSignOut}
+            action="negative"
+            className="w-full"
+          >
+            <ButtonText>Sign Out</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }

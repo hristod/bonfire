@@ -1,7 +1,16 @@
 import { useState } from 'react';
-import { View, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { HStack } from '@/components/ui/hstack';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { FormControl, FormControlError, FormControlErrorText } from '@/components/ui/form-control';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { signInWithApple, signInWithGoogle } from '../../lib/supabase-oauth';
@@ -44,9 +53,11 @@ export default function SignUpScreen() {
           toast.show({
             placement: 'top',
             render: ({ id }) => (
-              <Toast nativeID={id} action="error" variant="solid">
-                <ToastTitle>Error</ToastTitle>
-                <ToastDescription>Authentication failed. Please try again.</ToastDescription>
+              <Toast nativeID={`toast-${id}`} action="error">
+                <VStack space="xs" className="flex-1">
+                  <ToastTitle>Error</ToastTitle>
+                  <ToastDescription>Authentication failed. Please try again.</ToastDescription>
+                </VStack>
               </Toast>
             ),
           });
@@ -58,9 +69,11 @@ export default function SignUpScreen() {
       toast.show({
         placement: 'top',
         render: ({ id }) => (
-          <Toast nativeID={id} action="error" variant="solid">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>An unexpected error occurred</ToastDescription>
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>An unexpected error occurred</ToastDescription>
+            </VStack>
           </Toast>
         ),
       });
@@ -87,203 +100,168 @@ export default function SignUpScreen() {
         toast.show({
           placement: 'top',
           render: ({ id }) => (
-            <Toast nativeID={id} action="error" variant="solid">
-              <ToastTitle>Error</ToastTitle>
-              <ToastDescription>{error.message}</ToastDescription>
+            <Toast nativeID={`toast-${id}`} action="error">
+              <VStack space="xs" className="flex-1">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>{error.message}</ToastDescription>
+              </VStack>
             </Toast>
           ),
         });
       }
     } catch (error) {
+      console.error(error);
       toast.show({
         placement: 'top',
         render: ({ id }) => (
-          <Toast nativeID={id} action="error" variant="solid">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>An unexpected error occurred</ToastDescription>
+          <Toast nativeID={`toast-${id}`} action="error">
+            <VStack space="xs" className="flex-1">
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>An unexpected error occurred</ToastDescription>
+            </VStack>
           </Toast>
         ),
       });
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1"
-    >
-      <ScrollView className="flex-1 bg-white">
-        <View className="p-6">
-          <VStack space="lg">
-            <View className="mb-4">
-              <Text className="text-3xl font-bold text-typography-900 mb-2">
-                Create Account
-              </Text>
-              <Text className="text-base text-typography-500">
-                Sign up to get started
-              </Text>
-            </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Box className="flex-1 p-5 justify-center">
+        <Heading size="2xl" className="mb-8 text-center">Create Account</Heading>
 
-            {/* OAuth Buttons */}
-            <VStack space="sm">
-              <OAuthButton
-                provider="apple"
-                onPress={() => handleOAuthSignIn('apple')}
-                loading={oauthLoading}
-              />
-              <OAuthButton
-                provider="google"
-                onPress={() => handleOAuthSignIn('google')}
-                loading={oauthLoading}
-              />
-            </VStack>
+        <VStack space="sm">
+        <OAuthButton
+          provider="apple"
+          onPress={() => handleOAuthSignIn('apple')}
+          loading={oauthLoading}
+        />
 
-            <View className="flex-row items-center my-4">
-              <View className="flex-1 h-px bg-typography-200" />
-              <Text className="px-4 text-typography-500">or</Text>
-              <View className="flex-1 h-px bg-typography-200" />
-            </View>
+        <OAuthButton
+          provider="google"
+          onPress={() => handleOAuthSignIn('google')}
+          loading={oauthLoading}
+        />
+      </VStack>
 
-            {/* Email Field */}
-            <FormControl isInvalid={!!errors.email}>
-              <FormControlLabel>
-                <FormControlLabelText>Email</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={control}
-                name="email"
-                rules={{
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="you@example.com"
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoFocus
-                    />
-                  </Input>
-                )}
-              />
-              <FormControlError>
-                <FormControlErrorText>
-                  {errors.email?.message}
-                </FormControlErrorText>
-              </FormControlError>
-            </FormControl>
+      <HStack space="md" className="items-center my-5">
+        <Box className="flex-1 h-px bg-border-300" />
+        <Text size="sm" className="text-typography-500">or continue with</Text>
+        <Box className="flex-1 h-px bg-border-300" />
+      </HStack>
 
-            {/* Nickname Field */}
-            <FormControl isInvalid={!!errors.nickname}>
-              <FormControlLabel>
-                <FormControlLabelText>Nickname</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={control}
-                name="nickname"
-                rules={{
-                  required: 'Nickname is required',
-                  minLength: {
-                    value: 3,
-                    message: 'Nickname must be at least 3 characters',
-                  },
-                  maxLength: {
-                    value: 20,
-                    message: 'Nickname must be less than 20 characters',
-                  },
-                  pattern: {
-                    value: /^[a-zA-Z0-9_]+$/,
-                    message: 'Nickname can only contain letters, numbers, and underscores',
-                  },
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="your_nickname"
-                      value={value}
-                      onChangeText={onChange}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <FormControlError>
-                <FormControlErrorText>
-                  {errors.nickname?.message}
-                </FormControlErrorText>
-              </FormControlError>
-            </FormControl>
+      <VStack space="md">
+        <FormControl isInvalid={!!errors.email}>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Email"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.email?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-            {/* Password Field */}
-            <FormControl isInvalid={!!errors.password}>
-              <FormControlLabel>
-                <FormControlLabelText>Password</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={control}
-                name="password"
-                rules={{
-                  required: 'Password is required',
-                  minLength: {
-                    value: 8,
-                    message: 'Password must be at least 8 characters',
-                  },
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="••••••••"
-                      value={value}
-                      onChangeText={onChange}
-                      secureTextEntry
-                    />
-                  </Input>
-                )}
-              />
-              <FormControlError>
-                <FormControlErrorText>
-                  {errors.password?.message}
-                </FormControlErrorText>
-              </FormControlError>
-            </FormControl>
+        <FormControl isInvalid={!!errors.nickname}>
+          <Controller
+            control={control}
+            name="nickname"
+            rules={{
+              required: 'Nickname is required',
+              minLength: {
+                value: 3,
+                message: 'Nickname must be at least 3 characters',
+              },
+              maxLength: {
+                value: 20,
+                message: 'Nickname must be less than 20 characters',
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: 'Nickname can only contain letters, numbers, and underscores',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Nickname"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-            {/* Sign Up Button */}
-            <Button
-              disabled={loading}
-              onPress={handleSubmit(onSignUp)}
-              className="bg-primary-600 active:bg-primary-700 mt-2"
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <ButtonText className="text-white font-semibold">
-                  Sign Up
-                </ButtonText>
-              )}
-            </Button>
+        <FormControl isInvalid={!!errors.password}>
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'Password is required',
+              minLength: {
+                value: 8,
+                message: 'Password must be at least 8 characters',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input>
+                <InputField
+                  placeholder="Password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  secureTextEntry
+                />
+              </Input>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorText>{errors.password?.message}</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
 
-            {/* Sign In Link */}
-            <Button
-              variant="link"
-              onPress={() => router.push('/(auth)/sign-in')}
-              className="mt-2"
-            >
-              <ButtonText className="text-primary-600">
-                Already have an account? Sign In
-              </ButtonText>
-            </Button>
-          </VStack>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Button
+          isDisabled={loading}
+          onPress={handleSubmit(onSignUp)}
+          className="mt-2"
+        >
+          <ButtonText>{loading ? 'Creating account...' : 'Sign Up'}</ButtonText>
+        </Button>
+
+          <Button
+            variant="link"
+            onPress={() => router.push('/(auth)/sign-in')}
+          >
+            <ButtonText>Already have an account? Sign In</ButtonText>
+          </Button>
+        </VStack>
+      </Box>
+    </SafeAreaView>
   );
 }
