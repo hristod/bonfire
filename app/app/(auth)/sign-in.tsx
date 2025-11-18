@@ -103,20 +103,25 @@ export default function SignInScreen() {
       });
 
       if (error) {
+        console.error("Sign in error:", error);
+
+        // Show generic error message for authentication failures (security best practice)
+        const errorMessage = "Invalid email or password. Please try again.";
+
         toast.show({
           placement: "top",
           render: ({ id }) => (
             <Toast nativeID={`toast-${id}`} action="error">
               <VStack space="xs" className="flex-1">
                 <ToastTitle>Error</ToastTitle>
-                <ToastDescription>{error.message}</ToastDescription>
+                <ToastDescription>{errorMessage}</ToastDescription>
               </VStack>
             </Toast>
           ),
         });
       }
     } catch (error) {
-      console.error(error);
+      console.error("Sign in exception:", error);
       toast.show({
         placement: "top",
         render: ({ id }) => (
