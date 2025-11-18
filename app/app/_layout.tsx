@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '../store/authStore';
 
 export default function RootLayout() {
@@ -30,11 +31,17 @@ export default function RootLayout() {
 
   if (!initialized || loading) {
     return (
-      <Center className="flex-1">
-        <Spinner size="large" />
-      </Center>
+      <GluestackUIProvider mode="light">
+        <Center className="flex-1">
+          <Spinner size="large" />
+        </Center>
+      </GluestackUIProvider>
     );
   }
 
-  return <Slot />;
+  return (
+    <GluestackUIProvider mode="light">
+      <Slot />
+    </GluestackUIProvider>
+  );
 }
