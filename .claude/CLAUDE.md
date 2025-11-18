@@ -2,7 +2,14 @@
 
 ## Project Overview
 
-Bonfire is a React Native mobile application built with Expo and Supabase. The app provides social authentication and user profiles with a focus on clean architecture and production-ready code.
+Bonfire is a **mobile-native React Native application** built with Expo and Supabase. The app provides social authentication and user profiles with a focus on clean architecture and production-ready code.
+
+**CRITICAL: This is a MOBILE APP, not a website.** All UX patterns, component choices, and development decisions must prioritize mobile-native experiences:
+- No web-style patterns (hover states, "remember me" checkboxes, cookie banners)
+- Mobile-first UX (haptic feedback, native keyboards, pull-to-refresh, gesture navigation)
+- Platform-specific behaviors (iOS/Android differences)
+- Touch-optimized interactions
+- Native loading indicators and feedback
 
 ## Tech Stack
 
@@ -11,8 +18,19 @@ Bonfire is a React Native mobile application built with Expo and Supabase. The a
 - **Backend:** Supabase (Auth, Database, Storage)
 - **State Management:** Zustand
 - **Forms:** React Hook Form
-- **UI Library:** gluestack-ui
+- **UI Library:** Gluestack UI v3 (copy-pasteable components)
+- **Styling:** NativeWind v4 + Tailwind CSS v3.4
 - **Package Manager:** pnpm
+- **React:** 19.1.0
+
+**Planned Migration:**
+- **UI Library:** Migrate to Gluestack UI v3.0.0 (copy-pasteable components with NativeWind)
+- **Styling:** Add NativeWind v4 + Tailwind CSS v3.4 (replacing gluestack-style)
+- See `docs/plans/` for migration design document
+
+**Migration Note (2025-01):** Migrated from Gluestack UI v1 to v3. See `docs/MIGRATION_GLUESTACK_V3.md` for details.
+
+**Migration Note (2025-01):** Migrated from Gluestack UI v1 to v3. See `docs/MIGRATION_GLUESTACK_V3.md` for details.
 
 ## Architecture Patterns
 
@@ -103,24 +121,101 @@ app/app/
 
 ### UI Components
 
-**IMPORTANT: Always use gluestack-ui components when available.**
+**Styling pattern:**
+```typescript
+<View className="bg-white p-4 rounded-md">
+  <Text className="text-primary-500 text-lg font-bold">
+    Hello World
+  </Text>
+  <Button className="bg-primary-600 active:bg-primary-700">
+    <ButtonText className="text-white">Click Me</ButtonText>
+  </Button>
+</View>
+```
 
-- Before creating custom UI components, check gluestack-ui documentation via context7
-- Use Context7 MCP tool to fetch latest gluestack-ui docs: `/gluestack-ui/gluestack-ui`
-- Only use React Native primitives (View, Text, TouchableOpacity, etc.) when gluestack doesn't have an equivalent
-- Examples of gluestack components to use:
-  - `Button` instead of TouchableOpacity + Text
-  - `Input` instead of TextInput
-  - `Box` instead of View
-  - `Text` component with variants
-  - `VStack`, `HStack` instead of View with flexDirection
+**Form pattern:**
+```typescript
+<FormControl isInvalid={!!errors.field}>
+  <FormControlLabel>
+    <FormControlLabelText>Label</FormControlLabelText>
+  </FormControlLabel>
+  <Controller render={({ field }) => (
+    <Input>
+      <InputField
+        placeholder="Enter value"
+        value={field.value}
+        onChangeText={field.onChange}
+      />
+    </Input>
+  )} />
+  <FormControlError>
+    <FormControlErrorText>{errors.field?.message}</FormControlErrorText>
+  </FormControlError>
+</FormControl>
+```
 
-**Why gluestack-ui:**
-- Consistent design system across the app
-- Built-in accessibility
-- Theme support
-- Responsive utilities
-- Type-safe component props
+**Toast pattern:**
+```typescript
+const toast = useToast();
+toast.show({
+  placement: 'top',
+  render: ({ id }) => (
+    <Toast nativeID={id} action="error" variant="solid">
+      <ToastTitle>Error</ToastTitle>
+      <ToastDescription>{message}</ToastDescription>
+    </Toast>
+  ),
+});
+```
+
+**Loading states:**
+```typescript
+import { ActivityIndicator } from 'react-native';
+
+<Button disabled={loading}>
+  {loading ? (
+    <ActivityIndicator size="small" color="white" />
+  ) : (
+    <ButtonText>Submit</ButtonText>
+  )}
+</Button>
+```
+
+**Mobile UX patterns:**
+```typescript
+// Keyboard handling
+import { KeyboardAvoidingView, Platform } from 'react-native';
+
+<KeyboardAvoidingView
+  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  className="flex-1"
+>
+  <ScrollView>
+    {/* Form content */}
+  </ScrollView>
+</KeyboardAvoidingView>
+
+// Pull-to-refresh
+import { RefreshControl } from 'react-native';
+
+<ScrollView
+  refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+  }
+>
+  {/* Content */}
+</ScrollView>
+```
+
+**Why Gluestack v3 + NativeWind:**
+- **Copy-pasteable components** - Full control over UI layer
+- **Tailwind CSS** - Industry-standard styling with excellent tooling
+- **Better tree-shaking** - Only bundle components you use
+- **Familiar syntax** - Same as web development
+- **NativeWind** - Tailwind for React Native with full compatibility
+- **Type-safe** - TypeScript support throughout
+- **Accessible** - Built-in accessibility features
+- **Mobile-native UX** - Platform-specific behaviors and patterns
 
 **Safe Area Handling:**
 - Always use `SafeAreaView` from `react-native-safe-area-context` (NOT from react-native)
@@ -142,13 +237,26 @@ app/app/
 - Use Supabase error codes for specific handling (e.g., `23505` for unique constraint violations)
 - Filter "User cancelled" OAuth errors - don't show as errors to users
 
-### Component Patterns
+### Component Patterns (Mobile-Native)
 
 - Functional components with TypeScript interfaces for props
 - Default exports for screens/pages
 - Named exports for reusable components
-- StyleSheet.create for all styles
-- Loading states and disabled states on interactive elements
+- Use Tailwind `className` for styling (no StyleSheet.create, no utility props)
+- Loading states with `ActivityIndicator` and disabled states on interactive elements
+- Mobile-native patterns: `KeyboardAvoidingView`, `RefreshControl`, platform-specific behavior
+
+**Mobile-specific patterns:**
+- Native ActivityIndicator for loading states (platform-aware)
+- KeyboardAvoidingView for forms (iOS: padding, Android: height)
+- Safe area insets for notch/dynamic island support
+- Haptic feedback for important interactions (expo-haptics)
+- Platform-specific navigation (BackHandler on Android)
+- Pull-to-refresh for data screens (RefreshControl)
+- Native keyboard types (email-address, numeric, etc.)
+- Optimistic UI updates for instant feedback
+- Toast placement at top (thumb-friendly on mobile)
+- Accessibility labels for VoiceOver/TalkBack
 
 ### File Organization
 
@@ -156,8 +264,20 @@ app/app/
 app/
 ├── app/                 # Expo Router pages (screens)
 ├── components/          # Reusable UI components
+│   └── ui/             # Gluestack v3 copy-pasteable components
+│       ├── button/
+│       ├── input/
+│       ├── form-control/
+│       ├── toast/
+│       ├── vstack/
+│       ├── hstack/
+│       └── gluestack-ui-provider/
 ├── lib/                # Utilities, helpers, Supabase client
 ├── store/              # Zustand state stores
+├── tailwind.config.js  # Tailwind CSS configuration
+├── global.css          # Tailwind directives
+├── metro.config.js     # Metro bundler with NativeWind
+├── babel.config.js     # Babel with NativeWind preset
 └── package.json
 ```
 
@@ -174,6 +294,56 @@ app/
 - All schema changes via migrations in `supabase/migrations/`
 - Generate types after migrations: `pnpm supabase:types`
 - Types exported to `shared/types/database.types.ts`
+
+### Git Worktrees with Supabase
+
+**Problem:** Supabase CLI initializes based on directory name, causing conflicts when using worktrees with custom names.
+
+**Solution:** Always use `--workdir` flag with Supabase CLI commands to point to the project root containing `supabase/` directory.
+
+**Project structure:**
+```
+bonfire/                          # Main git repository
+├── .worktrees/                   # Worktrees directory (gitignored)
+│   └── feature-name/             # Feature worktree
+│       ├── supabase/             # Supabase config (lives here)
+│       ├── app/                  # Expo app
+│       └── package.json          # Scripts with --workdir flag
+└── supabase/                     # Does NOT exist in main repo
+```
+
+**All package.json scripts use `--workdir .`:**
+```json
+{
+  "scripts": {
+    "supabase:start": "supabase start --workdir .",
+    "supabase:stop": "supabase stop --workdir .",
+    "supabase:reset": "supabase db reset --workdir .",
+    "supabase:status": "supabase status --workdir .",
+    "supabase:types": "supabase gen types typescript --local --workdir . > shared/types/supabase.ts"
+  }
+}
+```
+
+**Manual commands:**
+```bash
+# Always include --workdir . when in a worktree
+supabase start --workdir .
+supabase status --workdir .
+supabase migration new my_migration --workdir .
+```
+
+**Best practices:**
+1. Always use `--workdir` flag when working in worktrees
+2. Use unique `project_id` in each worktree's `supabase/config.toml` to avoid Docker conflicts
+3. Run commands from worktree root where `supabase/` directory exists
+4. Use npm/pnpm scripts rather than direct CLI commands
+
+**Troubleshooting:**
+- "cannot read config" error means Supabase is looking in wrong directory - verify `--workdir .` flag
+- Multiple Supabase instances running: stop all Docker containers and restart with correct flag
+
+See `docs/SUPABASE_WORKTREE_SETUP.md` for full details.
 
 ### OAuth Configuration
 

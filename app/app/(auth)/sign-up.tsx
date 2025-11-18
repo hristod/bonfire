@@ -15,6 +15,17 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { signInWithApple, signInWithGoogle } from '../../lib/supabase-oauth';
 import OAuthButton from '../../components/OAuthButton';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+} from '@/components/ui/form-control';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText } from '@/components/ui/button';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 interface SignUpForm {
   email: string;

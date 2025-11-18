@@ -15,15 +15,29 @@ import { useAuthStore } from '../../store/authStore';
 import { useProfileStore } from '../../store/profileStore';
 import { supabase } from '../../lib/supabase';
 import { pickAndUploadAvatar } from '../../lib/uploadAvatar';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+} from '@/components/ui/form-control';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText } from '@/components/ui/button';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ProfileForm {
   nickname: string;
 }
 
 export default function ProfileScreen() {
-  const { profile, user, setProfile } = useAuthStore();
+  const { profile, user, setProfile, initialize } = useAuthStore();
   const { isUploading, uploadProgress, setUploading, setProgress, resetProgress } = useProfileStore();
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<ProfileForm>({
     defaultValues: {
       nickname: profile?.nickname || '',

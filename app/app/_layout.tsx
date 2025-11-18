@@ -22,10 +22,8 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!user && !inAuthGroup) {
-      // Redirect to sign in if not authenticated
       router.replace('/(auth)/sign-in');
     } else if (user && inAuthGroup) {
-      // Redirect to app if authenticated
       router.replace('/(app)');
     }
   }, [user, initialized, loading, segments]);

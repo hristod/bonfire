@@ -12,6 +12,40 @@ import { FormControl, FormControlError, FormControlErrorText, FormControlHelper,
 import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { useAuthStore } from '../../store/authStore';
 import { updateProfileNickname, isNicknameAvailable } from '../../lib/profile-utils';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  FormControlHelper,
+  FormControlHelperText,
+} from '@/components/ui/form-control';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText } from '@/components/ui/button';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+
+// Helper functions for nickname validation and sanitization
+function sanitizeNickname(nickname: string): string {
+  return nickname
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 20);
+}
+
+function validateNickname(nickname: string): string | null {
+  if (nickname.length < 3) {
+    return 'Nickname must be at least 3 characters';
+  }
+  if (nickname.length > 20) {
+    return 'Nickname must be at most 20 characters';
+  }
+  if (!/^[a-z0-9_]+$/.test(nickname)) {
+    return 'Nickname can only contain letters, numbers, and underscores';
+  }
+  return null;
+}
 
 interface NicknameForm {
   nickname: string;
@@ -20,6 +54,8 @@ interface NicknameForm {
 export default function SelectNicknameScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [nicknameAvailable, setNicknameAvailable] = useState(false);
+  const [nicknameStatus, setNicknameStatus] = useState('3-20 characters, letters, numbers, and underscores only');
   const { user, setPendingNickname } = useAuthStore();
   const { control, handleSubmit, formState: { errors }, setError } = useForm<NicknameForm>();
   const toast = useToast();
@@ -43,18 +79,6 @@ export default function SelectNicknameScreen() {
     setLoading(true);
 
     try {
-      // Check if nickname is available
-      const available = await isNicknameAvailable(data.nickname);
-
-      if (!available) {
-        setError('nickname', {
-          type: 'manual',
-          message: 'This nickname is already taken',
-        });
-        setLoading(false);
-        return;
-      }
-
       // Update profile with new nickname
       await updateProfileNickname(user.id, data.nickname);
 
