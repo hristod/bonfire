@@ -1,33 +1,35 @@
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
-import { FormControl, FormControlError, FormControlErrorText } from '@/components/ui/form-control';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
-import { Avatar, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
-import { Spinner } from '@/components/ui/spinner';
-import { useAuthStore } from '../../store/authStore';
-import { useProfileStore } from '../../store/profileStore';
-import { supabase } from '../../lib/supabase';
-import { pickAndUploadAvatar } from '../../lib/uploadAvatar';
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { useAuthStore } from "../../store/authStore";
+import { useProfileStore } from "../../store/profileStore";
+import { supabase } from "../../lib/supabase";
+import { pickAndUploadAvatar } from "../../lib/uploadAvatar";
 import {
   FormControl,
   FormControlLabel,
   FormControlLabelText,
   FormControlError,
   FormControlErrorText,
-} from '@/components/ui/form-control';
-import { Input, InputField } from '@/components/ui/input';
-import { Button, ButtonText } from '@/components/ui/button';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
-import { VStack } from '@/components/ui/vstack';
-import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/form-control";
+import { Input, InputField } from "@/components/ui/input";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  useToast,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallbackText,
+} from "@/components/ui/avatar";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProfileForm {
   nickname: string;
@@ -35,12 +37,22 @@ interface ProfileForm {
 
 export default function ProfileScreen() {
   const { profile, user, setProfile, initialize } = useAuthStore();
-  const { isUploading, uploadProgress, setUploading, setProgress, resetProgress } = useProfileStore();
+  const {
+    isUploading,
+    uploadProgress,
+    setUploading,
+    setProgress,
+    resetProgress,
+  } = useProfileStore();
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { control, handleSubmit, formState: { errors } } = useForm<ProfileForm>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileForm>({
     defaultValues: {
-      nickname: profile?.nickname || '',
+      nickname: profile?.nickname || "",
     },
   });
   const toast = useToast();
@@ -52,16 +64,16 @@ export default function ProfileScreen() {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           nickname: data.nickname,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (error) {
         toast.show({
-          placement: 'top',
+          placement: "top",
           render: ({ id }) => (
             <Toast nativeID={`toast-${id}`} action="error">
               <VStack space="xs" className="flex-1">
@@ -80,7 +92,7 @@ export default function ProfileScreen() {
       }
 
       toast.show({
-        placement: 'top',
+        placement: "top",
         render: ({ id }) => (
           <Toast nativeID={`toast-${id}`} action="success">
             <VStack space="xs" className="flex-1">
@@ -92,7 +104,7 @@ export default function ProfileScreen() {
       });
     } catch (error) {
       toast.show({
-        placement: 'top',
+        placement: "top",
         render: ({ id }) => (
           <Toast nativeID={`toast-${id}`} action="error">
             <VStack space="xs" className="flex-1">
@@ -120,12 +132,12 @@ export default function ProfileScreen() {
       if (avatarUrl) {
         // Update profile with new avatar URL
         const { error } = await supabase
-          .from('profiles')
+          .from("profiles")
           .update({
             avatar_url: avatarUrl,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', user.id);
+          .eq("id", user.id);
 
         if (error) {
           throw error;
@@ -137,7 +149,7 @@ export default function ProfileScreen() {
         }
 
         toast.show({
-          placement: 'top',
+          placement: "top",
           render: ({ id }) => (
             <Toast nativeID={`toast-${id}`} action="success">
               <VStack space="xs" className="flex-1">
@@ -150,12 +162,14 @@ export default function ProfileScreen() {
       }
     } catch (error: any) {
       toast.show({
-        placement: 'top',
+        placement: "top",
         render: ({ id }) => (
           <Toast nativeID={`toast-${id}`} action="error">
             <VStack space="xs" className="flex-1">
               <ToastTitle>Error</ToastTitle>
-              <ToastDescription>{error.message || 'Failed to upload avatar'}</ToastDescription>
+              <ToastDescription>
+                {error.message || "Failed to upload avatar"}
+              </ToastDescription>
             </VStack>
           </Toast>
         ),
@@ -170,82 +184,92 @@ export default function ProfileScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <Box className="flex-1 p-5">
         <VStack space="lg">
-        <Heading size="2xl" className="mb-5">Profile</Heading>
+          <Heading size="2xl" className="mb-5">
+            Profile
+          </Heading>
 
-        <Button
-          variant="link"
-          onPress={handlePickImage}
-          isDisabled={isUploading}
-          className="self-center mb-5"
-        >
-          <VStack space="xs" className="items-center">
-            <Box className="relative">
-              <Avatar size="2xl">
-                {profile?.avatar_url && (
-                  <AvatarImage source={{ uri: profile.avatar_url }} alt="Profile avatar" />
+          <Button
+            variant="link"
+            onPress={handlePickImage}
+            isDisabled={isUploading}
+            className="self-center mb-5"
+          >
+            <VStack space="xs" className="items-center">
+              <Box className="relative">
+                <Avatar size="2xl">
+                  {profile?.avatar_url && (
+                    <AvatarImage
+                      source={{ uri: profile.avatar_url }}
+                      alt="Profile avatar"
+                    />
+                  )}
+                  <AvatarFallbackText>
+                    {profile?.nickname || "User"}
+                  </AvatarFallbackText>
+                </Avatar>
+                {isUploading && (
+                  <Box className="absolute inset-0 bg-black/50 rounded-full justify-center items-center">
+                    <Spinner size="small" color="white" />
+                    <Text className="text-white text-sm font-semibold mt-1">
+                      {Math.round(uploadProgress * 100)}%
+                    </Text>
+                  </Box>
                 )}
-                <AvatarFallbackText>
-                  {profile?.nickname || 'User'}
-                </AvatarFallbackText>
-              </Avatar>
-              {isUploading && (
-                <Box className="absolute inset-0 bg-black/50 rounded-full justify-center items-center">
-                  <Spinner size="small" color="white" />
-                  <Text className="text-white text-sm font-semibold mt-1">
-                    {Math.round(uploadProgress * 100)}%
-                  </Text>
-                </Box>
-              )}
-            </Box>
-            <Text className="text-primary-500 text-base">Change Photo</Text>
-          </VStack>
-        </Button>
+              </Box>
+              <Text className="text-primary-500 text-base">Change Photo</Text>
+            </VStack>
+          </Button>
 
-        <FormControl isInvalid={!!errors.nickname}>
-          <Controller
-            control={control}
-            name="nickname"
-            rules={{
-              required: 'Nickname is required',
-              minLength: {
-                value: 3,
-                message: 'Nickname must be at least 3 characters',
-              },
-              maxLength: {
-                value: 20,
-                message: 'Nickname must be less than 20 characters',
-              },
-              pattern: {
-                value: /^[a-zA-Z0-9_]+$/,
-                message: 'Nickname can only contain letters, numbers, and underscores',
-              },
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <VStack space="xs">
-                <Text className="text-sm font-semibold text-typography-700">Nickname</Text>
-                <Input>
-                  <InputField
-                    placeholder="Nickname"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    autoCapitalize="none"
-                  />
-                </Input>
-              </VStack>
-            )}
-          />
-          <FormControlError>
-            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
+          <FormControl isInvalid={!!errors.nickname}>
+            <Controller
+              control={control}
+              name="nickname"
+              rules={{
+                required: "Nickname is required",
+                minLength: {
+                  value: 3,
+                  message: "Nickname must be at least 3 characters",
+                },
+                maxLength: {
+                  value: 20,
+                  message: "Nickname must be less than 20 characters",
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_]+$/,
+                  message:
+                    "Nickname can only contain letters, numbers, and underscores",
+                },
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <VStack space="xs">
+                  <Text className="text-sm font-semibold text-typography-700">
+                    Nickname
+                  </Text>
+                  <Input>
+                    <InputField
+                      placeholder="Nickname"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                </VStack>
+              )}
+            />
+            <FormControlError>
+              <FormControlErrorText>
+                {errors.nickname?.message}
+              </FormControlErrorText>
+            </FormControlError>
+          </FormControl>
 
           <Button
             isDisabled={saving || isUploading}
             onPress={handleSubmit(onSave)}
             className="mt-2"
           >
-            <ButtonText>{saving ? 'Saving...' : 'Save Changes'}</ButtonText>
+            <ButtonText>{saving ? "Saving..." : "Save Changes"}</ButtonText>
           </Button>
         </VStack>
       </Box>

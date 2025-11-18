@@ -1,17 +1,15 @@
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
-import { FormControl, FormControlError, FormControlErrorText, FormControlHelper, FormControlHelperText } from '@/components/ui/form-control';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
-import { useAuthStore } from '../../store/authStore';
-import { updateProfileNickname, isNicknameAvailable } from '../../lib/profile-utils';
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { useAuthStore } from "../../store/authStore";
+import {
+  updateProfileNickname,
+  isNicknameAvailable,
+} from "../../lib/profile-utils";
 import {
   FormControl,
   FormControlLabel,
@@ -20,29 +18,34 @@ import {
   FormControlErrorText,
   FormControlHelper,
   FormControlHelperText,
-} from '@/components/ui/form-control';
-import { Input, InputField } from '@/components/ui/input';
-import { Button, ButtonText } from '@/components/ui/button';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
-import { VStack } from '@/components/ui/vstack';
+} from "@/components/ui/form-control";
+import { Input, InputField } from "@/components/ui/input";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  useToast,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
 
 // Helper functions for nickname validation and sanitization
 function sanitizeNickname(nickname: string): string {
   return nickname
     .toLowerCase()
-    .replace(/[^a-z0-9_]/g, '')
+    .replace(/[^a-z0-9_]/g, "")
     .slice(0, 20);
 }
 
 function validateNickname(nickname: string): string | null {
   if (nickname.length < 3) {
-    return 'Nickname must be at least 3 characters';
+    return "Nickname must be at least 3 characters";
   }
   if (nickname.length > 20) {
-    return 'Nickname must be at most 20 characters';
+    return "Nickname must be at most 20 characters";
   }
   if (!/^[a-z0-9_]+$/.test(nickname)) {
-    return 'Nickname can only contain letters, numbers, and underscores';
+    return "Nickname can only contain letters, numbers, and underscores";
   }
   return null;
 }
@@ -55,15 +58,22 @@ export default function SelectNicknameScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [nicknameAvailable, setNicknameAvailable] = useState(false);
-  const [nicknameStatus, setNicknameStatus] = useState('3-20 characters, letters, numbers, and underscores only');
+  const [nicknameStatus, setNicknameStatus] = useState(
+    "3-20 characters, letters, numbers, and underscores only",
+  );
   const { user, setPendingNickname } = useAuthStore();
-  const { control, handleSubmit, formState: { errors }, setError } = useForm<NicknameForm>();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<NicknameForm>();
   const toast = useToast();
 
   const onSubmit = async (data: NicknameForm) => {
     if (!user) {
       toast.show({
-        placement: 'top',
+        placement: "top",
         render: ({ id }) => (
           <Toast nativeID={`toast-${id}`} action="error">
             <VStack space="xs" className="flex-1">
@@ -84,16 +94,18 @@ export default function SelectNicknameScreen() {
 
       // Clear pending state and navigate to app
       setPendingNickname(false);
-      router.replace('/(app)');
+      router.replace("/(app)");
     } catch (error) {
-      console.error('Error updating nickname:', error);
+      console.error("Error updating nickname:", error);
       toast.show({
-        placement: 'top',
+        placement: "top",
         render: ({ id }) => (
           <Toast nativeID={`toast-${id}`} action="error">
             <VStack space="xs" className="flex-1">
               <ToastTitle>Error</ToastTitle>
-              <ToastDescription>Unable to save nickname. Please try again.</ToastDescription>
+              <ToastDescription>
+                Unable to save nickname. Please try again.
+              </ToastDescription>
             </VStack>
           </Toast>
         ),
@@ -107,60 +119,61 @@ export default function SelectNicknameScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <Box className="flex-1 p-5 justify-center">
         <VStack space="lg">
-        <VStack space="xs">
-          <Heading size="2xl">Choose Your Nickname</Heading>
-          <Text size="sm" className="text-typography-500">
-            The auto-generated nickname is already taken. Please choose a different one.
-          </Text>
-        </VStack>
+          <VStack space="xs">
+            <Heading size="2xl">Choose Your Nickname</Heading>
+            <Text size="sm" className="text-typography-500">
+              The auto-generated nickname is already taken. Please choose a
+              different one.
+            </Text>
+          </VStack>
 
-        <FormControl isInvalid={!!errors.nickname}>
-          <Controller
-            control={control}
-            name="nickname"
-            rules={{
-              required: 'Nickname is required',
-              minLength: {
-                value: 3,
-                message: 'Nickname must be at least 3 characters',
-              },
-              maxLength: {
-                value: 20,
-                message: 'Nickname must be at most 20 characters',
-              },
-              pattern: {
-                value: /^[a-zA-Z0-9_]+$/,
-                message: 'Nickname can only contain letters, numbers, and underscores',
-              },
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input>
-                <InputField
-                  placeholder="Nickname"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  autoCapitalize="none"
-                  autoFocus
-                />
-              </Input>
-            )}
-          />
-          <FormControlHelper>
-            <FormControlHelperText>
-              3-20 characters, letters, numbers, and underscores only
-            </FormControlHelperText>
-          </FormControlHelper>
-          <FormControlError>
-            <FormControlErrorText>{errors.nickname?.message}</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
+          <FormControl isInvalid={!!errors.nickname}>
+            <Controller
+              control={control}
+              name="nickname"
+              rules={{
+                required: "Nickname is required",
+                minLength: {
+                  value: 3,
+                  message: "Nickname must be at least 3 characters",
+                },
+                maxLength: {
+                  value: 20,
+                  message: "Nickname must be at most 20 characters",
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_]+$/,
+                  message:
+                    "Nickname can only contain letters, numbers, and underscores",
+                },
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input>
+                  <InputField
+                    placeholder="Nickname"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                    autoFocus
+                  />
+                </Input>
+              )}
+            />
+            <FormControlHelper>
+              <FormControlHelperText>
+                3-20 characters, letters, numbers, and underscores only
+              </FormControlHelperText>
+            </FormControlHelper>
+            <FormControlError>
+              <FormControlErrorText>
+                {errors.nickname?.message}
+              </FormControlErrorText>
+            </FormControlError>
+          </FormControl>
 
-          <Button
-            isDisabled={loading}
-            onPress={handleSubmit(onSubmit)}
-          >
-            <ButtonText>{loading ? 'Saving...' : 'Continue'}</ButtonText>
+          <Button isDisabled={loading} onPress={handleSubmit(onSubmit)}>
+            <ButtonText>{loading ? "Saving..." : "Continue"}</ButtonText>
           </Button>
         </VStack>
       </Box>
