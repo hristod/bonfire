@@ -1,14 +1,67 @@
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useAuthStore } from '../../store/authStore';
+import { startLocationTracking, stopLocationTracking, getCurrentLocation } from '@/lib/location-tracking';
+import { findNearbyBonfires } from '@/lib/bonfire-utils';
+import { NearbyBonfire } from '@bonfire/shared';
+import { BonfireCard } from '@/components/bonfire/BonfireCard';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, signOut } = useAuthStore();
+  const [nearbyBonfires, setNearbyBonfires] = useState<NearbyBonfire[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  useEffect(() => {
+    initializeLocationTracking();
+    return () => {
+      stopLocationTracking();
+    };
+  }, []);
+
+  async function initializeLocationTracking() {
+    try {
+      await startLocationTracking();
+      setLocationEnabled(true);
+      await loadNearbyBonfires();
+    } catch (error) {
+      console.error('HomeScreen: Failed to start location tracking:', error);
+      setLocationEnabled(false);
+      Alert.alert(
+        'Location Required',
+        'Please enable location permissions to discover nearby bonfires.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setInitialLoad(false);
+    }
+  }
+
+  async function loadNearbyBonfires() {
+    try {
+      setLoading(true);
+      const location = await getCurrentLocation();
+      const bonfires = await findNearbyBonfires(
+        location.latitude,
+        location.longitude,
+        50 // 50m search radius
+      );
+      setNearbyBonfires(bonfires);
+    } catch (error) {
+      console.error('HomeScreen: Failed to load nearby bonfires:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -16,27 +69,82 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Box className="flex-1 p-5 justify-center items-center">
-        <VStack space="lg" className="w-full">
-        <Heading size="2xl" className="text-center mb-5">
-          Welcome, {profile?.nickname}!
-        </Heading>
+      <Box className="flex-1 bg-gray-50">
+        {/* Header */}
+        <Box className="bg-white p-4 border-b border-gray-200">
+          <Heading size="2xl" className="mb-1">
+            Nearby Bonfires
+          </Heading>
+          <Text className="text-gray-600">
+            Welcome, {profile?.nickname}!
+          </Text>
+        </Box>
 
-        <Button
-          onPress={() => router.push('/(app)/profile')}
-          className="w-full"
-        >
-          <ButtonText>View Profile</ButtonText>
-        </Button>
+        {/* Loading state */}
+        {initialLoad ? (
+          <Box className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#FF6B35" />
+            <Text className="text-gray-500 mt-4">Initializing location...</Text>
+          </Box>
+        ) : (
+          <>
+            {/* Bonfire list */}
+            <FlatList
+              data={nearbyBonfires}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <BonfireCard
+                  bonfire={item}
+                  onPress={() => router.push(`/bonfire/${item.id}`)}
+                />
+              )}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading}
+                  onRefresh={loadNearbyBonfires}
+                />
+              }
+              contentContainerStyle={{ padding: 16 }}
+              ListEmptyComponent={
+                <Box className="p-4 items-center">
+                  <Text className="text-gray-500 text-center mb-2">
+                    {locationEnabled
+                      ? 'No bonfires nearby. Create one!'
+                      : 'Enable location to discover bonfires'}
+                  </Text>
+                </Box>
+              }
+            />
 
-          <Button
-            onPress={handleSignOut}
-            action="negative"
-            className="w-full"
-          >
-            <ButtonText>Sign Out</ButtonText>
-          </Button>
-        </VStack>
+            {/* Action buttons */}
+            <Box className="bg-white p-4 border-t border-gray-200">
+              <VStack space="md" className="w-full">
+                <Button
+                  onPress={() => router.push('/(app)/create-bonfire')}
+                  className="w-full bg-primary-600"
+                >
+                  <ButtonText>Create Bonfire</ButtonText>
+                </Button>
+
+                <Button
+                  onPress={() => router.push('/(app)/profile')}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <ButtonText>View Profile</ButtonText>
+                </Button>
+
+                <Button
+                  onPress={handleSignOut}
+                  action="negative"
+                  className="w-full"
+                >
+                  <ButtonText>Sign Out</ButtonText>
+                </Button>
+              </VStack>
+            </Box>
+          </>
+        )}
       </Box>
     </SafeAreaView>
   );
