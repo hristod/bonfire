@@ -29,7 +29,7 @@ interface BonfireStore {
   unsubscribe: () => void;
 
   // Cleanup
-  reset: () => void;
+  reset: () => Promise<void>;
 }
 
 export const useBonfireStore = create<BonfireStore>((set, get) => ({
@@ -45,11 +45,17 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
   setParticipants: (participants) => set({ participants }),
 
   addMessage: (message) =>
-    set((state) => ({
-      messages: [...state.messages, message].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      )
-    })),
+    set((state) => {
+      // Deduplicate messages by ID
+      const exists = state.messages.some(m => m.id === message.id);
+      if (exists) return state;
+
+      return {
+        messages: [...state.messages, message].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+      };
+    }),
 
   setMessages: (messages) =>
     set({
@@ -84,8 +90,11 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching messages:', error);
-    } else if (messages) {
+      console.error('bonfireStore.subscribeToMessages: Error fetching messages:', error);
+      throw error;
+    }
+
+    if (messages) {
       const formattedMessages = messages.map((msg) => ({
         ...msg,
         sender_nickname: (msg.profiles as any)?.nickname,
@@ -107,7 +116,7 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
         },
         async (payload) => {
           // Fetch the message with profile data
-          const { data: newMessage } = await supabase
+          const { data: newMessage, error: fetchError } = await supabase
             .from('bonfire_messages')
             .select(`
               *,
@@ -118,6 +127,11 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
             `)
             .eq('id', payload.new.id)
             .single();
+
+          if (fetchError) {
+            console.error('bonfireStore.subscribeToMessages: Error fetching new message:', fetchError);
+            return;
+          }
 
           if (newMessage) {
             const formattedMessage = {
@@ -142,9 +156,9 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
     }
   },
 
-  reset: () => {
+  reset: async () => {
     const { unsubscribe } = get();
-    unsubscribe();
+    await unsubscribe();
     set({
       activeBonfire: null,
       participants: [],
