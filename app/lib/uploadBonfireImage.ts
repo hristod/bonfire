@@ -10,6 +10,11 @@ async function processAndUploadImage(
   userId: string,
   onProgress?: (progress: number) => void
 ): Promise<ImageUploadResult> {
+  // Validate asset dimensions exist
+  if (!asset.width || !asset.height) {
+    throw new Error('processAndUploadImage: Invalid image - missing dimensions');
+  }
+
   // Resize to max 1920px (preserve aspect ratio)
   const maxWidth = 1920;
   const maxHeight = 1920;
@@ -64,23 +69,25 @@ async function processAndUploadImage(
 
         onProgress?.(0.95);
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data, error: urlError } = await supabase.storage
           .from('bonfire-images')
-          .getPublicUrl(filename);
+          .createSignedUrl(filename, 60 * 60 * 24 * 7); // 7 days
 
-        if (!publicUrl) {
-          throw new Error('Failed to get URL for uploaded image');
+        if (urlError || !data?.signedUrl) {
+          console.error('processAndUploadImage: Failed to generate signed URL:', urlError);
+          throw new Error('processAndUploadImage: Failed to generate signed URL for uploaded image');
         }
 
         onProgress?.(1);
 
         resolve({
-          url: publicUrl,
+          url: data.signedUrl,
           width: manipulatedImage.width,
           height: manipulatedImage.height,
           sizeBytes,
         });
       } catch (error) {
+        console.error('processAndUploadImage: Error processing and uploading image:', error);
         reject(error);
       }
     };
@@ -114,7 +121,7 @@ export async function pickAndUploadBonfireImage(
 
     return await processAndUploadImage(asset, bonfireId, userId, onProgress);
   } catch (error) {
-    console.error('Error uploading bonfire image:', error);
+    console.error('pickAndUploadBonfireImage: Error uploading bonfire image:', error);
     throw error;
   }
 }
@@ -142,7 +149,7 @@ export async function takeAndUploadBonfireImage(
 
     return await processAndUploadImage(asset, bonfireId, userId, onProgress);
   } catch (error) {
-    console.error('Error taking and uploading photo:', error);
+    console.error('takeAndUploadBonfireImage: Error taking and uploading photo:', error);
     throw error;
   }
 }
