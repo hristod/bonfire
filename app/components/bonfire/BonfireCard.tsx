@@ -13,7 +13,11 @@ interface BonfireCardProps {
 
 export function BonfireCard({ bonfire, onPress }: BonfireCardProps) {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Join ${bonfire.name} bonfire`}
+    >
       <Box className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
         <HStack className="items-start gap-3">
           {/* Creator avatar */}
@@ -27,7 +31,7 @@ export function BonfireCard({ bonfire, onPress }: BonfireCardProps) {
             ) : (
               <Box className="w-12 h-12 bg-primary-100 items-center justify-center">
                 <Text className="text-primary-600 font-bold text-lg">
-                  {bonfire.creator_nickname[0].toUpperCase()}
+                  {bonfire.creator_nickname?.[0]?.toUpperCase() || '?'}
                 </Text>
               </Box>
             )}

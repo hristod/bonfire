@@ -13,6 +13,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isOwnMessage, onImagePress }: MessageBubbleProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   return (
     <Box
@@ -36,7 +37,7 @@ export function MessageBubble({ message, isOwnMessage, onImagePress }: MessageBu
         {/* Image message */}
         {message.message_type === 'image' && message.image_url && (
           <VStack className="gap-2">
-            <Pressable onPress={() => onImagePress?.(message.image_url!)}>
+            <Pressable onPress={() => onImagePress?.(message.image_url)}>
               <Image
                 source={{ uri: message.image_url }}
                 style={{
@@ -49,10 +50,16 @@ export function MessageBubble({ message, isOwnMessage, onImagePress }: MessageBu
                 }}
                 resizeMode="cover"
                 onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
               />
-              {!imageLoaded && (
+              {!imageLoaded && !imageError && (
                 <Box className="absolute inset-0 items-center justify-center bg-gray-100 rounded-lg">
                   <Text className="text-gray-400">Loading...</Text>
+                </Box>
+              )}
+              {imageError && (
+                <Box className="absolute inset-0 items-center justify-center bg-gray-100 rounded-lg">
+                  <Text className="text-red-500 text-sm">Failed to load</Text>
                 </Box>
               )}
             </Pressable>
