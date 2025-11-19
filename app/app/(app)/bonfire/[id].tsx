@@ -63,6 +63,26 @@ export default function BonfireScreen() {
 
     try {
       const { bonfire, participants } = await getBonfireWithParticipants(id);
+
+      // Check if current user is a participant
+      const isParticipant = participants.some(p => p.user_id === user?.id);
+
+      if (!isParticipant) {
+        // User is not a participant, redirect to join screen
+        console.log('BonfireScreen: User is not a participant, redirecting to join screen');
+        router.replace({
+          pathname: '/join-bonfire',
+          params: {
+            bonfireId: bonfire.id,
+            secretCode: bonfire.current_secret_code || '',
+            hasPin: bonfire.has_pin?.toString() || 'false',
+            bonfireName: bonfire.name,
+            description: bonfire.description || '',
+          },
+        });
+        return;
+      }
+
       setActiveBonfire(bonfire);
       setParticipants(participants);
     } catch (error) {

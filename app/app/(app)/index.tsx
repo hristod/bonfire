@@ -95,7 +95,18 @@ export default function HomeScreen() {
               renderItem={({ item }) => (
                 <BonfireCard
                   bonfire={item}
-                  onPress={() => router.push(`/bonfire/${item.id}`)}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/join-bonfire',
+                      params: {
+                        bonfireId: item.id,
+                        secretCode: item.current_secret_code,
+                        hasPin: item.has_pin.toString(),
+                        bonfireName: item.name,
+                        description: item.description || '',
+                      },
+                    })
+                  }
                 />
               )}
               refreshControl={
