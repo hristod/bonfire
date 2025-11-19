@@ -11,6 +11,25 @@ import { generateCurrentSecret } from './secret-code';
 import * as Crypto from 'expo-crypto';
 
 /**
+ * Type for the RPC return from get_bonfire_with_participants
+ */
+interface BonfireWithParticipantsRow {
+  id: string;
+  name: string;
+  description: string | null;
+  creator_id: string;
+  latitude: number;
+  longitude: number;
+  proximity_radius_meters: number;
+  expires_at: string;
+  participant_id: string | null;
+  participant_nickname: string | null;
+  participant_avatar_url: string | null;
+  participant_joined_at: string | null;
+  participant_last_seen_at: string | null;
+}
+
+/**
  * Hash a PIN using SHA-256 (bcrypt not available in React Native)
  * Note: In production, consider using a backend function for proper bcrypt
  */
@@ -201,7 +220,8 @@ export async function getBonfireWithParticipants(bonfireId: string): Promise<{
     }
 
     // Parse result (first row contains bonfire data, all rows contain participants)
-    const firstRow = data[0];
+    const typedData = data as BonfireWithParticipantsRow[];
+    const firstRow = typedData[0];
     const bonfire: Bonfire = {
       id: firstRow.id,
       creator_id: firstRow.creator_id,
@@ -213,15 +233,15 @@ export async function getBonfireWithParticipants(bonfireId: string): Promise<{
       expires_at: firstRow.expires_at,
     } as Bonfire;
 
-    const participants: BonfireParticipant[] = data
-      .filter((row) => row.participant_id)
+    const participants: BonfireParticipant[] = typedData
+      .filter((row): row is BonfireWithParticipantsRow & { participant_id: string } => row.participant_id !== null)
       .map((row) => ({
         bonfire_id: bonfireId,
         user_id: row.participant_id,
-        nickname: row.participant_nickname,
-        avatar_url: row.participant_avatar_url,
-        joined_at: '',
-        last_seen_at: row.participant_last_seen_at,
+        nickname: row.participant_nickname ?? undefined,
+        avatar_url: row.participant_avatar_url ?? undefined,
+        joined_at: row.participant_joined_at ?? new Date().toISOString(),
+        last_seen_at: row.participant_last_seen_at ?? new Date().toISOString(),
       }));
 
     return { bonfire, participants };

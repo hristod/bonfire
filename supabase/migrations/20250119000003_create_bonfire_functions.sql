@@ -120,6 +120,7 @@ RETURNS TABLE (
   participant_id UUID,
   participant_nickname TEXT,
   participant_avatar_url TEXT,
+  participant_joined_at TIMESTAMPTZ,
   participant_last_seen_at TIMESTAMPTZ
 ) AS $$
 BEGIN
@@ -136,6 +137,7 @@ BEGIN
     bp.user_id AS participant_id,
     p.nickname AS participant_nickname,
     p.avatar_url AS participant_avatar_url,
+    bp.joined_at AS participant_joined_at,
     bp.last_seen_at AS participant_last_seen_at
   FROM bonfires b
   LEFT JOIN bonfire_participants bp ON bp.bonfire_id = b.id

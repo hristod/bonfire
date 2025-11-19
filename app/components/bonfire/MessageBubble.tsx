@@ -37,7 +37,7 @@ export function MessageBubble({ message, isOwnMessage, onImagePress }: MessageBu
         {/* Image message */}
         {message.message_type === 'image' && message.image_url && (
           <VStack className="gap-2">
-            <Pressable onPress={() => onImagePress?.(message.image_url)}>
+            <Pressable onPress={() => message.image_url && onImagePress?.(message.image_url)}>
               <Image
                 source={{ uri: message.image_url }}
                 style={{
