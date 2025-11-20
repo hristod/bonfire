@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useAuthStore } from '../../store/authStore';
 import { startLocationTracking, stopLocationTracking, getCurrentLocation } from '@/lib/location-tracking';
-import { findNearbyBonfires } from '@/lib/bonfire-utils';
+import { findNearbyBonfires, getBonfireSecret } from '@/lib/bonfire-utils';
 import { NearbyBonfire } from '@bonfire/shared';
 import { BonfireCard } from '@/components/bonfire/BonfireCard';
 
@@ -63,6 +63,38 @@ export default function HomeScreen() {
     }
   }
 
+  const handleBonfirePress = async (bonfire: NearbyBonfire) => {
+    try {
+      // Get current location
+      const location = await getCurrentLocation();
+
+      // Fetch secret code (validates proximity)
+      const secretCode = await getBonfireSecret(
+        bonfire.id,
+        location.latitude,
+        location.longitude
+      );
+
+      // Navigate to join screen with secret
+      router.push({
+        pathname: '/join-bonfire',
+        params: {
+          bonfireId: bonfire.id,
+          secretCode: secretCode,
+          hasPin: bonfire.has_pin.toString(),
+          bonfireName: bonfire.name,
+          description: bonfire.description || '',
+        },
+      });
+    } catch (error: any) {
+      console.error('HomeScreen: Failed to get bonfire secret:', error);
+      Alert.alert(
+        'Cannot Join',
+        error.message || 'Failed to get bonfire access. Please try again.'
+      );
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -95,18 +127,7 @@ export default function HomeScreen() {
               renderItem={({ item }) => (
                 <BonfireCard
                   bonfire={item}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/join-bonfire',
-                      params: {
-                        bonfireId: item.id,
-                        secretCode: item.current_secret_code,
-                        hasPin: item.has_pin.toString(),
-                        bonfireName: item.name,
-                        description: item.description || '',
-                      },
-                    })
-                  }
+                  onPress={() => handleBonfirePress(item)}
                 />
               )}
               refreshControl={
