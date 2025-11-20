@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
@@ -35,17 +35,39 @@ export default function BonfireScreen() {
       return;
     }
 
-    loadBonfire();
-    subscribeToMessages(id);
+    let mounted = true;
+
+    const initialize = async () => {
+      try {
+        await loadBonfire();
+        if (!mounted) return;
+
+        await subscribeToMessages(id);
+        if (!mounted) return;
+      } catch (error) {
+        console.error('BonfireScreen: Failed to initialize bonfire:', error);
+        if (mounted) {
+          Alert.alert('Error', 'Failed to load bonfire. Please try again.');
+          router.back();
+        }
+      }
+    };
+
+    initialize();
 
     // Update presence every 30 seconds
     const presenceInterval = setInterval(() => {
-      updatePresence(id);
+      if (mounted) {
+        updatePresence(id).catch(err => {
+          console.error('BonfireScreen: Failed to update presence:', err);
+        });
+      }
     }, 30000);
 
     return () => {
+      mounted = false;
       clearInterval(presenceInterval);
-      reset();
+      reset(); // Fire-and-forget is OK for cleanup
     };
   }, [id]);
 
