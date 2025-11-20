@@ -159,7 +159,13 @@ export async function joinBonfire(data: JoinBonfireData): Promise<void> {
     );
 
     if (validationError) {
-      console.error('Error validating bonfire join:', validationError);
+      console.error('joinBonfire: Error validating bonfire join:', validationError);
+
+      // Check for rate limit error
+      if (validationError.message?.includes('Too many failed PIN attempts')) {
+        throw new Error('Too many incorrect PIN attempts. Please wait 15 minutes before trying again.');
+      }
+
       throw validationError;
     }
 
@@ -189,11 +195,11 @@ export async function joinBonfire(data: JoinBonfireData): Promise<void> {
       });
 
     if (insertError) {
-      console.error('Error joining bonfire:', insertError);
+      console.error('joinBonfire: Error joining bonfire:', insertError);
       throw insertError;
     }
   } catch (error) {
-    console.error('Failed to join bonfire:', error);
+    console.error('joinBonfire: Failed to join bonfire:', error);
     throw error;
   }
 }
