@@ -29,7 +29,7 @@ interface BonfireStore {
   unsubscribe: () => void;
 
   // Cleanup
-  reset: () => Promise<void>;
+  reset: () => void;
 }
 
 export const useBonfireStore = create<BonfireStore>((set, get) => ({
@@ -156,9 +156,10 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
     }
   },
 
-  reset: async () => {
-    const { unsubscribe } = get();
-    await unsubscribe();
+  reset: () => {
+    const { channel } = get();
+
+    // Reset state immediately (synchronous)
     set({
       activeBonfire: null,
       participants: [],
@@ -167,5 +168,14 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
       sending: false,
       channel: null,
     });
+
+    // Clean up channel asynchronously (fire-and-forget)
+    if (channel) {
+      supabase
+        .removeChannel(channel)
+        .catch((err) => {
+          console.error('bonfireStore: Failed to remove channel during reset:', err);
+        });
+    }
   },
 }));
