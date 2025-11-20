@@ -10,6 +10,24 @@
 
 ---
 
+## ⚠️ SECURITY UPDATE (2025-01-20)
+
+**Security vulnerabilities identified in code review have been addressed in a follow-up plan:**
+- See: `docs/plans/2025-01-20-fix-bonfire-security-issues.md`
+- Branch: `bonfire-core-mechanics` (includes fixes)
+
+**Critical fixes applied:**
+- PIN rate limiting (5 attempts / 15 min)
+- Secret code removed from discovery API
+- RPC rate limiting (30 calls / min)
+- Location validation (accuracy + staleness checks)
+- Image URL refresh mechanism
+- Async cleanup race condition fixes
+
+**All security issues from code review resolved.**
+
+---
+
 ## Phase 1: Backend Infrastructure ✅ COMPLETED
 
 ### Task 1.1: Create Bonfire Tables Migration ✅
