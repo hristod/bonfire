@@ -9,6 +9,26 @@ const LOCATION_TRACKING_TASK = 'bonfire-location-tracking';
 // Store of bonfire IDs we've already notified about (in-memory for this session)
 const notifiedBonfires = new Set<string>();
 
+/**
+ * Validate location accuracy and freshness
+ */
+function isLocationValid(location: LocationCoords): { valid: boolean; reason?: string } {
+  // Check accuracy (must be within 50m)
+  if (location.accuracy && location.accuracy > 50) {
+    return { valid: false, reason: 'Location accuracy too low' };
+  }
+
+  // Check staleness (must be within last 60 seconds)
+  if (location.timestamp) {
+    const age = Date.now() - location.timestamp;
+    if (age > 60000) {
+      return { valid: false, reason: 'Location is stale' };
+    }
+  }
+
+  return { valid: true };
+}
+
 // Define the background task
 TaskManager.defineTask(LOCATION_TRACKING_TASK, async ({ data, error }) => {
   if (error) {
@@ -121,6 +141,13 @@ export async function getCurrentLocation(): Promise<LocationCoords> {
 
 async function updateCreatorBonfireLocation(location: LocationCoords): Promise<void> {
   try {
+    // Validate location
+    const validation = isLocationValid(location);
+    if (!validation.valid) {
+      console.warn(`[LocationTracking] Skipping bonfire update: ${validation.reason}`);
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -138,6 +165,13 @@ async function updateCreatorBonfireLocation(location: LocationCoords): Promise<v
     }
 
     if (activeBonfire) {
+      console.log('[LocationTracking] Updating bonfire location:', {
+        bonfireId: activeBonfire.id,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+      });
+
       // Update bonfire location (creator is moving)
       const { error: updateError } = await supabase
         .from('bonfires')
@@ -158,6 +192,19 @@ async function updateCreatorBonfireLocation(location: LocationCoords): Promise<v
 
 async function checkForNearbyBonfires(location: LocationCoords): Promise<void> {
   try {
+    // Validate location
+    const validation = isLocationValid(location);
+    if (!validation.valid) {
+      console.warn(`[LocationTracking] Skipping nearby check: ${validation.reason}`);
+      return;
+    }
+
+    console.log('[LocationTracking] Checking for nearby bonfires:', {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy,
+    });
+
     // Query Supabase for bonfires within range
     const { data: nearbyBonfires, error } = await supabase.rpc('find_nearby_bonfires', {
       user_lat: location.latitude,
@@ -173,6 +220,8 @@ async function checkForNearbyBonfires(location: LocationCoords): Promise<void> {
     if (!nearbyBonfires || nearbyBonfires.length === 0) {
       return;
     }
+
+    console.log(`[LocationTracking] Found ${nearbyBonfires.length} nearby bonfires`);
 
     // Filter to only notify about bonfires we haven't notified about yet
     const newBonfires = (nearbyBonfires as NearbyBonfire[]).filter(
