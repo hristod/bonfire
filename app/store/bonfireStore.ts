@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Bonfire, BonfireMessage, BonfireParticipant } from '@bonfire/shared';
 import { supabase } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { refreshExpiredImageUrls } from '@/lib/refreshImageUrls';
 
 interface BonfireStore {
   // Current active bonfire
@@ -27,6 +28,9 @@ interface BonfireStore {
   // Realtime subscription management
   subscribeToMessages: (bonfireId: string) => Promise<void>;
   unsubscribe: () => void;
+
+  // Image URL refresh
+  refreshImageUrls: () => Promise<void>;
 
   // Cleanup
   reset: () => void;
@@ -153,6 +157,17 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
     if (channel) {
       await supabase.removeChannel(channel);
       set({ channel: null });
+    }
+  },
+
+  refreshImageUrls: async () => {
+    const { messages } = get();
+
+    try {
+      const refreshedMessages = await refreshExpiredImageUrls(messages);
+      set({ messages: refreshedMessages });
+    } catch (error) {
+      console.error('bonfireStore: Failed to refresh image URLs:', error);
     }
   },
 

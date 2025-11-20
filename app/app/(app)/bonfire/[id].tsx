@@ -22,6 +22,7 @@ export default function BonfireScreen() {
     setActiveBonfire,
     setParticipants,
     subscribeToMessages,
+    refreshImageUrls,
     reset,
   } = useBonfireStore();
 
@@ -44,6 +45,11 @@ export default function BonfireScreen() {
 
         await subscribeToMessages(id);
         if (!mounted) return;
+
+        // Refresh any expired image URLs
+        refreshImageUrls().catch(err => {
+          console.error('BonfireScreen: Failed to refresh image URLs:', err);
+        });
       } catch (error) {
         console.error('BonfireScreen: Failed to initialize bonfire:', error);
         if (mounted) {
