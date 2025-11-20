@@ -57,9 +57,9 @@ export interface NearbyBonfire {
   distance_meters: number;
   participant_count: number;
   has_pin: boolean;
-  current_secret_code: string;
   expires_at: string;
   proximity_radius_meters: number;
+  // current_secret_code removed for security - use getBonfireSecret() instead
 }
 
 // Location types

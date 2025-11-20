@@ -139,6 +139,39 @@ export async function findNearbyBonfires(
 }
 
 /**
+ * Get secret code for a bonfire (validates proximity)
+ */
+export async function getBonfireSecret(
+  bonfireId: string,
+  latitude: number,
+  longitude: number
+): Promise<string> {
+  try {
+    const { data, error } = await supabase.rpc('get_bonfire_secret', {
+      p_bonfire_id: bonfireId,
+      user_lat: latitude,
+      user_lng: longitude,
+    });
+
+    if (error) {
+      console.error('getBonfireSecret: Error getting bonfire secret:', error);
+
+      // Check for proximity error
+      if (error.message?.includes('must be within')) {
+        throw new Error('You must be closer to the bonfire to join');
+      }
+
+      throw error;
+    }
+
+    return data as string;
+  } catch (error) {
+    console.error('getBonfireSecret: Failed to get bonfire secret:', error);
+    throw error;
+  }
+}
+
+/**
  * Join a bonfire
  */
 export async function joinBonfire(data: JoinBonfireData): Promise<void> {
