@@ -13,7 +13,7 @@
 ## ⚠️ SECURITY UPDATE (2025-01-20)
 
 **Security vulnerabilities identified in code review have been addressed in a follow-up plan:**
-- See: `docs/plans/2025-01-20-fix-bonfire-security-issues.md`
+- See: `docs/plans/2025-11-20-fix-bonfire-security-issues.md`
 - Branch: `bonfire-core-mechanics` (includes fixes)
 
 **Critical fixes applied:**

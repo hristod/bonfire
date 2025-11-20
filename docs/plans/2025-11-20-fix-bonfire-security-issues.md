@@ -1928,7 +1928,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 17: Update implementation plan document
 
 **Files:**
-- Modify: `docs/plans/2025-01-19-bonfire-proximity-chat.md`
+- Modify: `docs/plans/2025-11-19-bonfire-proximity-chat.md`
 
 **Step 1: Add note about security fixes at top of document**
 
@@ -1940,7 +1940,7 @@ Add after the header:
 ## ⚠️ SECURITY UPDATE (2025-01-20)
 
 **Security vulnerabilities identified in code review have been addressed in a follow-up plan:**
-- See: `docs/plans/2025-01-20-fix-bonfire-security-issues.md`
+- See: `docs/plans/2025-11-20-fix-bonfire-security-issues.md`
 - Branch: `bonfire-core-mechanics` (includes fixes)
 
 **Critical fixes applied:**
@@ -1959,7 +1959,7 @@ Add after the header:
 **Step 2: Commit updated documentation**
 
 ```bash
-git add docs/plans/2025-01-19-bonfire-proximity-chat.md
+git add docs/plans/2025-11-19-bonfire-proximity-chat.md
 git commit -m "docs: add security update note to original plan
 
 - Reference security fixes implementation plan
@@ -2055,7 +2055,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
-Plan complete and saved to `docs/plans/2025-01-20-fix-bonfire-security-issues.md`.
+Plan complete and saved to `docs/plans/2025-11-20-fix-bonfire-security-issues.md`.
 
 **Two execution options:**
 
