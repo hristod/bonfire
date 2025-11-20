@@ -127,13 +127,19 @@ export async function findNearbyBonfires(
     });
 
     if (error) {
-      console.error('Error finding nearby bonfires:', error);
+      console.error('findNearbyBonfires: Error finding nearby bonfires:', error);
+
+      // Check for rate limit error
+      if (error.message?.includes('Rate limit exceeded')) {
+        throw new Error('Searching too frequently. Please wait a moment and try again.');
+      }
+
       throw error;
     }
 
     return data as NearbyBonfire[];
   } catch (error) {
-    console.error('Failed to find nearby bonfires:', error);
+    console.error('findNearbyBonfires: Failed to find nearby bonfires:', error);
     throw error;
   }
 }

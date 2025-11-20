@@ -56,8 +56,14 @@ export default function HomeScreen() {
         50 // 50m search radius
       );
       setNearbyBonfires(bonfires);
-    } catch (error) {
+    } catch (error: any) {
       console.error('HomeScreen: Failed to load nearby bonfires:', error);
+
+      // Show user-friendly error
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to load nearby bonfires. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
