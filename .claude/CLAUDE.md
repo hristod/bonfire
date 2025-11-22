@@ -285,9 +285,13 @@ app/
 
 ### Local Development
 
+**IMPORTANT: Always use development builds, NEVER Expo Go.** The app uses native modules (location tracking, notifications, etc.) that require a development build.
+
 1. **Start Supabase:** `pnpm supabase start` (local Docker instance)
 2. **Start Expo:** `cd app && pnpm start`
-3. **Run on device:** Scan QR with Expo Go or use simulator
+3. **Run on device:**
+   - Android: `npx expo run:android` or use existing dev build
+   - iOS: `pnpm build:dev:ios` to create dev build, then run from device
 
 ### Database Changes
 
