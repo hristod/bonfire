@@ -79,6 +79,13 @@ export type Database = {
             referencedRelation: "bonfires"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bonfire_messages_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bonfire_participants: {
@@ -106,6 +113,13 @@ export type Database = {
             columns: ["bonfire_id"]
             isOneToOne: false
             referencedRelation: "bonfires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bonfire_participants_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -162,7 +176,15 @@ export type Database = {
           proximity_radius_meters?: number
           secret_window_start?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bonfires_creator_id_profiles_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pin_attempts: {
         Row: {
@@ -1196,6 +1218,13 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
+      }
+      is_bonfire_participant: {
+        Args: {
+          p_bonfire_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       json: {
         Args: {
