@@ -60,7 +60,15 @@
       "Bash(psql:*)",
       "Bash(docker logs:*)",
       "Bash(npx gluestack-ui@latest init)",
-      "mcp__mobile-mcp__mobile_take_screenshot"
+      "mcp__mobile-mcp__mobile_take_screenshot",
+      "Bash(pnpm tsc:*)",
+      "Bash(git reset:*)",
+      "Bash(git -C /Users/hristodimitrov/projects/bonfire diff /Users/hristodimitrov/projects/bonfire/app/app/(app)/join-bonfire.tsx)",
+      "Bash(git -C /Users/hristodimitrov/projects/bonfire diff app/app/(app)/index.tsx app/app/(app)/bonfire/[id].tsx)",
+      "Bash(git -C /Users/hristodimitrov/projects/bonfire log -1 --format=\"%H %s\")",
+      "Bash(git -C /Users/hristodimitrov/projects/bonfire show --stat --oneline 5b7c888)",
+      "Bash(pnpm supabase:reset:*)",
+      "Bash(pnpm supabase:types:*)"
     ],
     "deny": [],
     "ask": []

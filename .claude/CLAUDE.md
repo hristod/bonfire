@@ -20,8 +20,10 @@ Bonfire is a **mobile-native React Native application** built with Expo and Supa
 - **Forms:** React Hook Form
 - **UI Library:** Gluestack UI v3 (copy-pasteable components)
 - **Styling:** NativeWind v4 + Tailwind CSS v3.4
-- **Package Manager:** pnpm
+- **Package Manager:** pnpm (ALWAYS use pnpm, never npm/npx - use `pnpm dlx` instead of `npx`)
 - **React:** 19.1.0
+
+**CRITICAL Dependency Note:** Do NOT upgrade react-native-reanimated to v4. Gluestack UI v3 + @legendapp/motion are incompatible with Reanimated v4 (causes overlay components to crash). Stay on v3.x.
 
 **Planned Migration:**
 - **UI Library:** Migrate to Gluestack UI v3.0.0 (copy-pasteable components with NativeWind)
@@ -285,9 +287,13 @@ app/
 
 ### Local Development
 
+**IMPORTANT: Always use development builds, NEVER Expo Go.** The app uses native modules (location tracking, notifications, etc.) that require a development build.
+
 1. **Start Supabase:** `pnpm supabase start` (local Docker instance)
 2. **Start Expo:** `cd app && pnpm start`
-3. **Run on device:** Scan QR with Expo Go or use simulator
+3. **Run on device:**
+   - Android: `npx expo run:android` or use existing dev build
+   - iOS: `pnpm build:dev:ios` to create dev build, then run from device
 
 ### Database Changes
 

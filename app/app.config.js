@@ -16,6 +16,13 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: "com.bonfire.app",
       usesAppleSignIn: true,
+      infoPlist: {
+        UIBackgroundModes: ["location", "remote-notification"],
+        NSLocationWhenInUseUsageDescription: "Bonfire needs your location to discover nearby chat sessions.",
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Bonfire needs your location to discover nearby chat sessions even when the app is in the background.",
+        NSCameraUsageDescription: "Bonfire needs camera access to take photos for chat messages.",
+        NSPhotoLibraryUsageDescription: "Bonfire needs photo library access to share images in chat.",
+      },
     },
     android: {
       adaptiveIcon: {
@@ -23,12 +30,21 @@ module.exports = {
         backgroundColor: "#ffffff",
       },
       package: "com.bonfire.app",
+      permissions: [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+      ],
     },
     web: {
       favicon: "./assets/favicon.png",
     },
     plugins: [
       "expo-router",
+      "expo-task-manager",
       [
         "expo-build-properties",
         {
@@ -36,6 +52,22 @@ module.exports = {
             enableProguardInReleaseBuilds: true,
             enableShrinkResourcesInReleaseBuilds: true,
           },
+        },
+      ],
+      [
+        "expo-location",
+        {
+          locationAlwaysAndWhenInUsePermission: "Allow Bonfire to discover nearby chat sessions even when the app is in the background.",
+          locationWhenInUsePermission: "Allow Bonfire to discover nearby chat sessions.",
+          isAndroidBackgroundLocationEnabled: true,
+          isIosBackgroundLocationEnabled: true,
+        },
+      ],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/notification-icon.png",
+          color: "#FF6B35",
         },
       ],
     ],
