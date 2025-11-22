@@ -120,6 +120,11 @@ export async function findNearbyBonfires(
   maxDistance: number = 50
 ): Promise<NearbyBonfire[]> {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+
     const { data, error } = await supabase.rpc('find_nearby_bonfires', {
       user_lat: latitude,
       user_lng: longitude,

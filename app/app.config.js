@@ -44,6 +44,7 @@ module.exports = {
     },
     plugins: [
       "expo-router",
+      "expo-task-manager",
       [
         "expo-build-properties",
         {
