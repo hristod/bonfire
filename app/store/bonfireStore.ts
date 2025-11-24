@@ -119,6 +119,8 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
           filter: `bonfire_id=eq.${bonfireId}`,
         },
         async (payload) => {
+          console.log('bonfireStore: Received realtime message:', payload.new.id);
+
           // Fetch the message with profile data
           const { data: newMessage, error: fetchError } = await supabase
             .from('bonfire_messages')
@@ -147,7 +149,17 @@ export const useBonfireStore = create<BonfireStore>((set, get) => ({
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('bonfireStore: Realtime subscription active for bonfire:', bonfireId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('bonfireStore: Realtime channel error:', err);
+        } else if (status === 'TIMED_OUT') {
+          console.error('bonfireStore: Realtime subscription timed out');
+        } else {
+          console.log('bonfireStore: Realtime subscription status:', status);
+        }
+      });
 
     set({ channel });
   },
