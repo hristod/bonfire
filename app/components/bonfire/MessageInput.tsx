@@ -12,9 +12,10 @@ import { useAuthStore } from '@/store/authStore';
 interface MessageInputProps {
   bonfireId: string;
   onMessageSent?: () => void;
+  disabled?: boolean;
 }
 
-export function MessageInput({ bonfireId, onMessageSent }: MessageInputProps) {
+export function MessageInput({ bonfireId, onMessageSent, disabled = false }: MessageInputProps) {
   const { user } = useAuthStore();
   const [content, setContent] = useState('');
   const [imagePreview, setImagePreview] = useState<{
@@ -110,9 +111,9 @@ export function MessageInput({ bonfireId, onMessageSent }: MessageInputProps) {
   };
 
   return (
-    <Box className="border-t border-gray-200 bg-white p-3">
+    <Box className={`border-t border-gray-200 bg-white p-3 ${disabled ? 'opacity-50' : ''}`}>
       {/* Image preview */}
-      {imagePreview && (
+      {imagePreview && !disabled && (
         <Box className="mb-2 relative">
           <Image
             source={{ uri: imagePreview.url }}
@@ -140,7 +141,7 @@ export function MessageInput({ bonfireId, onMessageSent }: MessageInputProps) {
           size="sm"
           variant="outline"
           onPress={handlePickImage}
-          disabled={uploading || sending || !!imagePreview}
+          disabled={uploading || sending || !!imagePreview || disabled}
         >
           {uploading ? (
             <ActivityIndicator size="small" color="#FF6B35" />
@@ -155,21 +156,21 @@ export function MessageInput({ bonfireId, onMessageSent }: MessageInputProps) {
             size="sm"
             variant="outline"
             onPress={handleTakePhoto}
-            disabled={uploading || sending || !!imagePreview}
+            disabled={uploading || sending || !!imagePreview || disabled}
           >
             <ButtonIcon as={Camera} />
           </Button>
         )}
 
         {/* Text input */}
-        <Input className="flex-1">
+        <Input className="flex-1" isDisabled={disabled}>
           <InputField
-            placeholder={imagePreview ? 'Add a caption (optional)' : 'Type a message...'}
+            placeholder={disabled ? "This bonfire has ended" : (imagePreview ? 'Add a caption (optional)' : 'Type a message...')}
             value={content}
             onChangeText={setContent}
             multiline
             maxLength={imagePreview ? 500 : 2000}
-            editable={!sending}
+            editable={!sending && !disabled}
           />
         </Input>
 
@@ -177,7 +178,7 @@ export function MessageInput({ bonfireId, onMessageSent }: MessageInputProps) {
         <Button
           size="sm"
           onPress={handleSend}
-          disabled={(!content.trim() && !imagePreview) || sending}
+          disabled={(!content.trim() && !imagePreview) || sending || disabled}
           className="bg-primary-600"
         >
           {sending ? (

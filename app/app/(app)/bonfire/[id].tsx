@@ -27,6 +27,7 @@ export default function BonfireScreen() {
   } = useBonfireStore();
 
   const [imageViewerUrl, setImageViewerUrl] = useState<string | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -76,6 +77,14 @@ export default function BonfireScreen() {
       reset(); // Fire-and-forget is OK for cleanup
     };
   }, [id]);
+
+  // Check if bonfire is expired
+  useEffect(() => {
+    if (activeBonfire) {
+      const expired = !activeBonfire.is_active || new Date(activeBonfire.expires_at) <= new Date();
+      setIsExpired(expired);
+    }
+  }, [activeBonfire]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -148,6 +157,15 @@ export default function BonfireScreen() {
             </Text>
           </Box>
 
+          {/* Expired banner */}
+          {isExpired && (
+            <Box className="bg-amber-50 border-b border-amber-200 p-3">
+              <Text className="text-amber-800 text-sm text-center font-medium">
+                This bonfire has ended. You can view the chat history but cannot send new messages.
+              </Text>
+            </Box>
+          )}
+
           {/* Messages list */}
           <FlatList
             ref={flatListRef}
@@ -172,7 +190,7 @@ export default function BonfireScreen() {
           />
 
           {/* Message input */}
-          <MessageInput bonfireId={id} />
+          <MessageInput bonfireId={id} disabled={isExpired} />
         </Box>
       </KeyboardAvoidingView>
 
