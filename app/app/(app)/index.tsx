@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlatList, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { SectionList, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
@@ -9,13 +9,20 @@ import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useAuthStore } from '../../store/authStore';
 import { startLocationTracking, stopLocationTracking, getCurrentLocation } from '@/lib/location-tracking';
-import { findNearbyBonfires, getBonfireSecret } from '@/lib/bonfire-utils';
-import { NearbyBonfire } from '@bonfire/shared';
+import { findNearbyBonfires, getMyBonfires, getBonfireSecret } from '@/lib/bonfire-utils';
+import { NearbyBonfire, MyBonfire } from '@bonfire/shared';
 import { BonfireCard } from '@/components/bonfire/BonfireCard';
+
+interface BonfireSection {
+  title: string;
+  data: (MyBonfire | NearbyBonfire)[];
+  type: 'my' | 'nearby' | 'past';
+}
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, signOut } = useAuthStore();
+  const [myBonfires, setMyBonfires] = useState<MyBonfire[]>([]);
   const [nearbyBonfires, setNearbyBonfires] = useState<NearbyBonfire[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -32,10 +39,17 @@ export default function HomeScreen() {
     try {
       await startLocationTracking();
       setLocationEnabled(true);
-      await loadNearbyBonfires();
+      await loadBonfires();
     } catch (error) {
       console.error('HomeScreen: Failed to start location tracking:', error);
       setLocationEnabled(false);
+      // Still load my bonfires even without location
+      try {
+        const myBonfiresData = await getMyBonfires();
+        setMyBonfires(myBonfiresData);
+      } catch (err) {
+        console.error('HomeScreen: Failed to load my bonfires:', err);
+      }
       Alert.alert(
         'Location Required',
         'Please enable location permissions to discover nearby bonfires.',
@@ -46,30 +60,41 @@ export default function HomeScreen() {
     }
   }
 
-  async function loadNearbyBonfires() {
+  async function loadBonfires() {
     try {
       setLoading(true);
-      const location = await getCurrentLocation();
-      const bonfires = await findNearbyBonfires(
-        location.latitude,
-        location.longitude,
-        50 // 50m search radius
-      );
-      setNearbyBonfires(bonfires);
-    } catch (error: any) {
-      console.error('HomeScreen: Failed to load nearby bonfires:', error);
 
-      // Show user-friendly error
+      // Load my bonfires (always available)
+      const myBonfiresData = await getMyBonfires();
+      setMyBonfires(myBonfiresData);
+
+      // Load nearby bonfires (requires location)
+      if (locationEnabled) {
+        const location = await getCurrentLocation();
+        const nearbyBonfiresData = await findNearbyBonfires(
+          location.latitude,
+          location.longitude,
+          50 // 50m search radius
+        );
+        setNearbyBonfires(nearbyBonfiresData);
+      }
+    } catch (error: any) {
+      console.error('HomeScreen: Failed to load bonfires:', error);
       Alert.alert(
         'Error',
-        error.message || 'Failed to load nearby bonfires. Please try again.'
+        error.message || 'Failed to load bonfires. Please try again.'
       );
     } finally {
       setLoading(false);
     }
   }
 
-  const handleBonfirePress = async (bonfire: NearbyBonfire) => {
+  const handleMyBonfirePress = (bonfire: MyBonfire) => {
+    // Direct navigation to chat for joined bonfires
+    router.push(`/bonfire/${bonfire.id}`);
+  };
+
+  const handleNearbyBonfirePress = async (bonfire: NearbyBonfire) => {
     try {
       // Get current location
       const location = await getCurrentLocation();
@@ -105,13 +130,27 @@ export default function HomeScreen() {
     await signOut();
   };
 
+  // Split my bonfires into active and expired
+  const activeBonfires = myBonfires.filter(b => b.is_active && new Date(b.expires_at) > new Date());
+  const expiredBonfires = myBonfires.filter(b => !b.is_active || new Date(b.expires_at) <= new Date());
+
+  // Prepare sections data
+  const sections: BonfireSection[] = [
+    { title: 'My Bonfires', data: activeBonfires, type: 'my' },
+    { title: 'Nearby Bonfires', data: nearbyBonfires, type: 'nearby' },
+    ...(expiredBonfires.length > 0
+      ? [{ title: 'Past Bonfires', data: expiredBonfires, type: 'past' as const }]
+      : []
+    ),
+  ];
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Box className="flex-1 bg-gray-50">
         {/* Header */}
         <Box className="bg-white p-4 border-b border-gray-200">
           <Heading size="2xl" className="mb-1">
-            Nearby Bonfires
+            Bonfires
           </Heading>
           <Text className="text-gray-600">
             Welcome, {profile?.nickname}!
@@ -127,31 +166,64 @@ export default function HomeScreen() {
         ) : (
           <>
             {/* Bonfire list */}
-            <FlatList
-              data={nearbyBonfires}
+            <SectionList
+              sections={sections}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <BonfireCard
-                  bonfire={item}
-                  onPress={() => handleBonfirePress(item)}
-                />
+              renderItem={({ item, section }) => {
+                const isMyBonfire = section.type === 'my' || section.type === 'past';
+                const bonfire = item as MyBonfire | NearbyBonfire;
+
+                return (
+                  <BonfireCard
+                    bonfire={bonfire}
+                    onPress={() => {
+                      if (section.type === 'nearby') {
+                        handleNearbyBonfirePress(bonfire as NearbyBonfire);
+                      } else {
+                        handleMyBonfirePress(bonfire as MyBonfire);
+                      }
+                    }}
+                    variant={section.type === 'past' ? 'expired' : 'default'}
+                    showHostBadge={isMyBonfire && (bonfire as MyBonfire).is_creator}
+                  />
+                );
+              }}
+              renderSectionHeader={({ section }) => (
+                <Box className="bg-gray-50 px-4 py-2">
+                  <Heading size="md" className="text-gray-700">
+                    {section.title}
+                  </Heading>
+                </Box>
               )}
+              renderSectionFooter={({ section }) => {
+                if (section.data.length === 0) {
+                  let emptyMessage = '';
+                  if (section.type === 'my') {
+                    emptyMessage = "You haven't joined any bonfires yet. Discover one nearby or create your own!";
+                  } else if (section.type === 'nearby') {
+                    emptyMessage = locationEnabled
+                      ? 'No bonfires nearby. Create one!'
+                      : 'Enable location to discover bonfires';
+                  }
+
+                  return (
+                    <Box className="px-4 py-3">
+                      <Text className="text-gray-500 text-sm text-center">
+                        {emptyMessage}
+                      </Text>
+                    </Box>
+                  );
+                }
+                return null;
+              }}
               refreshControl={
                 <RefreshControl
                   refreshing={loading}
-                  onRefresh={loadNearbyBonfires}
+                  onRefresh={loadBonfires}
                 />
               }
-              contentContainerStyle={{ padding: 16 }}
-              ListEmptyComponent={
-                <Box className="p-4 items-center">
-                  <Text className="text-gray-500 text-center mb-2">
-                    {locationEnabled
-                      ? 'No bonfires nearby. Create one!'
-                      : 'Enable location to discover bonfires'}
-                  </Text>
-                </Box>
-              }
+              contentContainerStyle={{ paddingBottom: 16 }}
+              stickySectionHeadersEnabled={false}
             />
 
             {/* Action buttons */}
