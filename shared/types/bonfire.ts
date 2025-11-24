@@ -62,6 +62,24 @@ export interface NearbyBonfire {
   // current_secret_code removed for security - use getBonfireSecret() instead
 }
 
+export interface MyBonfire {
+  id: string;
+  name: string;
+  description: string | null;
+  creator_id: string;
+  creator_nickname: string | null;
+  creator_avatar_url: string | null;
+  latitude: number;
+  longitude: number;
+  proximity_radius_meters: number;
+  participant_count: number;
+  has_pin: boolean;
+  expires_at: string;
+  is_active: boolean;
+  is_creator: boolean;
+  joined_at: string;
+}
+
 // Location types
 export interface LocationCoords {
   latitude: number;
