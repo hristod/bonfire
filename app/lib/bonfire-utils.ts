@@ -4,6 +4,7 @@ import {
   JoinBonfireData,
   Bonfire,
   NearbyBonfire,
+  MyBonfire,
   BonfireMessage,
   BonfireParticipant,
 } from '@bonfire/shared';
@@ -145,6 +146,30 @@ export async function findNearbyBonfires(
     return data as NearbyBonfire[];
   } catch (error) {
     console.error('findNearbyBonfires: Failed to find nearby bonfires:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all bonfires the current user has joined
+ */
+export async function getMyBonfires(): Promise<MyBonfire[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+
+    const { data, error } = await supabase.rpc('get_my_bonfires');
+
+    if (error) {
+      console.error('getMyBonfires: Error fetching my bonfires:', error);
+      throw error;
+    }
+
+    return data as MyBonfire[];
+  } catch (error) {
+    console.error('getMyBonfires: Failed to fetch my bonfires:', error);
     throw error;
   }
 }
