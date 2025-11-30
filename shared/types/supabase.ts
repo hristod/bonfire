@@ -1197,6 +1197,26 @@ export type Database = {
           participant_last_seen_at: string
         }[]
       }
+      get_my_bonfires: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          description: string
+          creator_id: string
+          creator_nickname: string
+          creator_avatar_url: string
+          latitude: number
+          longitude: number
+          proximity_radius_meters: number
+          participant_count: number
+          has_pin: boolean
+          expires_at: string
+          is_active: boolean
+          is_creator: boolean
+          joined_at: string
+        }[]
+      }
       get_proj4_from_srid: {
         Args: {
           "": number

@@ -1,0 +1,205 @@
+import { useEffect, useState, useRef } from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useBonfireStore } from '@/store/bonfireStore';
+import { useAuthStore } from '@/store/authStore';
+import { MessageBubble } from '@/components/bonfire/MessageBubble';
+import { MessageInput } from '@/components/bonfire/MessageInput';
+import { ImageViewerModal } from '@/components/bonfire/ImageViewerModal';
+import { getBonfireWithParticipants, updatePresence } from '@/lib/bonfire-utils';
+
+export default function BonfireScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuthStore();
+  const {
+    activeBonfire,
+    participants,
+    messages,
+    loading,
+    setActiveBonfire,
+    setParticipants,
+    subscribeToMessages,
+    refreshImageUrls,
+    reset,
+  } = useBonfireStore();
+
+  const [imageViewerUrl, setImageViewerUrl] = useState<string | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (!id) {
+      console.error('BonfireScreen: No bonfire ID provided');
+      router.back();
+      return;
+    }
+
+    let mounted = true;
+
+    const initialize = async () => {
+      try {
+        await loadBonfire();
+        if (!mounted) return;
+
+        await subscribeToMessages(id);
+        if (!mounted) return;
+
+        // Refresh any expired image URLs
+        refreshImageUrls().catch(err => {
+          console.error('BonfireScreen: Failed to refresh image URLs:', err);
+        });
+      } catch (error) {
+        console.error('BonfireScreen: Failed to initialize bonfire:', error);
+        if (mounted) {
+          Alert.alert('Error', 'Failed to load bonfire. Please try again.');
+          router.back();
+        }
+      }
+    };
+
+    initialize();
+
+    // Update presence every 30 seconds
+    const presenceInterval = setInterval(() => {
+      if (mounted) {
+        updatePresence(id).catch(err => {
+          console.error('BonfireScreen: Failed to update presence:', err);
+        });
+      }
+    }, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(presenceInterval);
+      reset(); // Fire-and-forget is OK for cleanup
+    };
+  }, [id]);
+
+  // Check if bonfire is expired
+  useEffect(() => {
+    if (activeBonfire) {
+      const expired = !activeBonfire.is_active || new Date(activeBonfire.expires_at) <= new Date();
+      setIsExpired(expired);
+    }
+  }, [activeBonfire]);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  async function loadBonfire() {
+    if (!id) return;
+
+    try {
+      const { bonfire, participants } = await getBonfireWithParticipants(id);
+
+      // Check if current user is a participant
+      const isParticipant = participants.some(p => p.user_id === user?.id);
+
+      if (!isParticipant) {
+        // User is not a participant, redirect to join screen
+        console.log('BonfireScreen: User is not a participant, redirecting to join screen');
+        router.replace({
+          pathname: '/join-bonfire',
+          params: {
+            bonfireId: bonfire.id,
+            secretCode: bonfire.current_secret_code || '',
+            hasPin: bonfire.has_pin?.toString() || 'false',
+            bonfireName: bonfire.name,
+            description: bonfire.description || '',
+          },
+        });
+        return;
+      }
+
+      setActiveBonfire(bonfire);
+      setParticipants(participants);
+    } catch (error) {
+      console.error('BonfireScreen: Failed to load bonfire:', error);
+      router.back();
+    }
+  }
+
+  if (!activeBonfire || !id) {
+    return (
+      <SafeAreaView style={{ flex: 1 }}>
+        <Box className="flex-1 items-center justify-center bg-gray-50">
+          <ActivityIndicator size="large" color="#FF6B35" />
+          <Text className="text-gray-500 mt-4">Loading bonfire...</Text>
+        </Box>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={100}
+      >
+        <Box className="flex-1 bg-gray-50">
+          {/* Header */}
+          <Box className="bg-white border-b border-gray-200 p-4">
+            <Text className="text-xl font-bold text-gray-900">
+              {activeBonfire.name}
+            </Text>
+            <Text className="text-sm text-gray-600">
+              {participants.length} participant{participants.length !== 1 ? 's' : ''}
+            </Text>
+          </Box>
+
+          {/* Expired banner */}
+          {isExpired && (
+            <Box className="bg-amber-50 border-b border-amber-200 p-3">
+              <Text className="text-amber-800 text-sm text-center font-medium">
+                This bonfire has ended. You can view the chat history but cannot send new messages.
+              </Text>
+            </Box>
+          )}
+
+          {/* Messages list */}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <MessageBubble
+                message={item}
+                isOwnMessage={item.user_id === user?.id}
+                onImagePress={(url) => setImageViewerUrl(url)}
+              />
+            )}
+            contentContainerStyle={{ padding: 16 }}
+            ListEmptyComponent={
+              <Box className="flex-1 items-center justify-center py-8">
+                <Text className="text-gray-500">No messages yet</Text>
+                <Text className="text-gray-400 text-sm mt-1">
+                  Be the first to say something!
+                </Text>
+              </Box>
+            }
+          />
+
+          {/* Message input */}
+          <MessageInput bonfireId={id} disabled={isExpired} />
+        </Box>
+      </KeyboardAvoidingView>
+
+      {/* Image viewer */}
+      <ImageViewerModal
+        visible={!!imageViewerUrl}
+        imageUrl={imageViewerUrl}
+        onClose={() => setImageViewerUrl(null)}
+      />
+    </SafeAreaView>
+  );
+}
